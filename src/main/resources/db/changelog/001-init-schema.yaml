@@ -1,0 +1,314 @@
+databaseChangeLog:
+
+  # =========================
+  # USERS
+  # =========================
+  - changeSet:
+      id: 001-create-users
+      author: xenplan
+      changes:
+        - createTable:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  type: char(36)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+
+              - column:
+                  name: first_name
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: last_name
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: email
+                  type: varchar(150)
+                  constraints:
+                    nullable: false
+                    unique: true
+
+              - column:
+                  name: password
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: role
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: registration_date
+                  type: timestamp
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: active
+                  type: boolean
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: phone
+                  type: varchar(20)
+
+        - createIndex:
+            tableName: users
+            indexName: idx_users_email
+            columns:
+              - column:
+                  name: email
+
+        - createIndex:
+            tableName: users
+            indexName: idx_users_role
+            columns:
+              - column:
+                  name: role
+
+        - createIndex:
+            tableName: users
+            indexName: idx_users_active
+            columns:
+              - column:
+                  name: active
+
+  # =========================
+  # EVENTS
+  # =========================
+  - changeSet:
+      id: 002-create-events
+      author: xenplan
+      changes:
+        - createTable:
+            tableName: events
+            columns:
+              - column:
+                  name: id
+                  type: char(36)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+
+              - column:
+                  name: title
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: description
+                  type: varchar(1000)
+
+              - column:
+                  name: category
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: start_date
+                  type: timestamp
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: end_date
+                  type: timestamp
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: venue
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: city
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: max_capacity
+                  type: integer
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: unit_price
+                  type: decimal(10,2)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: image_url
+                  type: varchar(255)
+
+              - column:
+                  name: status
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: organizer_id
+                  type: char(36)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: updated_at
+                  type: timestamp
+
+        - addForeignKeyConstraint:
+            baseTableName: events
+            baseColumnNames: organizer_id
+            referencedTableName: users
+            referencedColumnNames: id
+            constraintName: fk_events_organizer
+            onDelete: RESTRICT
+            onUpdate: CASCADE
+
+        - createIndex:
+            tableName: events
+            indexName: idx_events_category
+            columns:
+              - column:
+                  name: category
+
+        - createIndex:
+            tableName: events
+            indexName: idx_events_status
+            columns:
+              - column:
+                  name: status
+
+        - createIndex:
+            tableName: events
+            indexName: idx_events_city
+            columns:
+              - column:
+                  name: city
+
+        - createIndex:
+            tableName: events
+            indexName: idx_events_start_date
+            columns:
+              - column:
+                  name: start_date
+
+  # =========================
+  # RESERVATIONS
+  # =========================
+  - changeSet:
+      id: 003-create-reservations
+      author: xenplan
+      changes:
+        - createTable:
+            tableName: reservations
+            columns:
+              - column:
+                  name: id
+                  type: char(36)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+
+              - column:
+                  name: user_id
+                  type: char(36)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: event_id
+                  type: char(36)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: number_of_seats
+                  type: integer
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: total_amount
+                  type: decimal(10,2)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: reservation_date
+                  type: timestamp
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: status
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: reservation_code
+                  type: varchar(12)
+                  constraints:
+                    nullable: false
+                    unique: true
+
+              - column:
+                  name: comment
+                  type: varchar(500)
+
+        - addForeignKeyConstraint:
+            baseTableName: reservations
+            baseColumnNames: user_id
+            referencedTableName: users
+            referencedColumnNames: id
+            constraintName: fk_reservations_user
+            onDelete: RESTRICT
+            onUpdate: CASCADE
+
+        - addForeignKeyConstraint:
+            baseTableName: reservations
+            baseColumnNames: event_id
+            referencedTableName: events
+            referencedColumnNames: id
+            constraintName: fk_reservations_event
+            onDelete: RESTRICT
+            onUpdate: CASCADE
+
+        - createIndex:
+            tableName: reservations
+            indexName: idx_reservations_code
+            columns:
+              - column:
+                  name: reservation_code
+
+        - createIndex:
+            tableName: reservations
+            indexName: idx_reservations_status
+            columns:
+              - column:
+                  name: status
