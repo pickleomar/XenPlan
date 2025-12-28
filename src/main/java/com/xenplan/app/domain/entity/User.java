@@ -1,21 +1,21 @@
 package com.xenplan.app.domain.entity;
 
-import com.xenplan.app.domain.enum.Role;
+import com.xenplan.app.domain.enums.Role;
 import jakarta.persistence.*;
-        import lombok.*;
-        import org.hibernate.annotations.UuidGenerator;
+import lombok.*;
+import org.hibernate.annotations.UuidGenerator;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
 @Table(
-        name = "users",
-        indexes = {
-                @Index(name = "idx_users_email", columnList = "email"),
-                @Index(name = "idx_users_role", columnList = "role"),
-                @Index(name = "idx_users_active", columnList = "active")
-        }
+    name = "users",
+    indexes = {
+        @Index(name = "idx_users_email", columnList = "email"),
+        @Index(name = "idx_users_role", columnList = "role"),
+        @Index(name = "idx_users_active", columnList = "active")
+    }
 )
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor

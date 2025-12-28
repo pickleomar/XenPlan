@@ -1,23 +1,23 @@
 package com.xenplan.app.domain.entity;
 
-import com.xenplan.app.domain.enum.EventCategory;
-import com.xenplan.app.domain.enum.EventStatus;
+import com.xenplan.app.domain.enums.EventCategory;
+import com.xenplan.app.domain.enums.EventStatus;
 import jakarta.persistence.*;
-        import lombok.*;
-        import org.hibernate.annotations.UuidGenerator;
+import lombok.*;
+import org.hibernate.annotations.UuidGenerator;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
 @Table(
-        name = "events",
-        indexes = {
-                @Index(name = "idx_events_category", columnList = "category"),
-                @Index(name = "idx_events_status", columnList = "status"),
-                @Index(name = "idx_events_city", columnList = "city"),
-                @Index(name = "idx_events_start_date", columnList = "start_date")
-        }
+    name = "events",
+    indexes = {
+        @Index(name = "idx_events_category", columnList = "category"),
+        @Index(name = "idx_events_status", columnList = "status"),
+        @Index(name = "idx_events_city", columnList = "city"),
+        @Index(name = "idx_events_start_date", columnList = "start_date")
+    }
 )
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
