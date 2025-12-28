@@ -1,7 +1,7 @@
 package com.xenplan.app.config;
 
 import com.xenplan.app.domain.entity.User;
-import com.xenplan.app.domain.enum.Role;
+import com.xenplan.app.domain.enums.Role;
 import com.xenplan.app.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;

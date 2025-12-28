@@ -1,20 +1,20 @@
 package com.xenplan.app.domain.entity;
 
-import com.xenplan.app.domain.enum.ReservationStatus;
+import com.xenplan.app.domain.enums.ReservationStatus;
 import jakarta.persistence.*;
-        import lombok.*;
-        import org.hibernate.annotations.UuidGenerator;
+import lombok.*;
+import org.hibernate.annotations.UuidGenerator;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
 @Table(
-        name = "reservations",
-        indexes = {
-                @Index(name = "idx_reservations_code", columnList = "reservation_code"),
-                @Index(name = "idx_reservations_status", columnList = "status")
-        }
+    name = "reservations",
+    indexes = {
+        @Index(name = "idx_reservations_code", columnList = "reservation_code"),
+        @Index(name = "idx_reservations_status", columnList = "status")
+    }
 )
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
