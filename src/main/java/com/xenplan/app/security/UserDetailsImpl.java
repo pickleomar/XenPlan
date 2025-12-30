@@ -50,4 +50,8 @@ public class UserDetailsImpl implements UserDetails {
     public boolean isEnabled() {
         return Boolean.TRUE.equals(user.getActive());
     }
+
+    public User getUser() {
+        return user;
+    }
 }
