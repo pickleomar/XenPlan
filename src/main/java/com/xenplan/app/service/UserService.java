@@ -43,5 +43,10 @@ public interface UserService {
      * Change user role (ADMIN only)
      */
     void changeUserRole(UUID userId, Role newRole, User currentUser);
+    
+    /**
+     * Change user password (self only)
+     */
+    void changePassword(UUID userId, String currentPassword, String newPassword, User currentUser);
 }
 

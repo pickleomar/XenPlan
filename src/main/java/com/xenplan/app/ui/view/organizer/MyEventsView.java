@@ -7,6 +7,7 @@ import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
@@ -63,8 +64,8 @@ public class MyEventsView extends VerticalLayout {
         
         HorizontalLayout headerLayout = new HorizontalLayout();
         headerLayout.setWidthFull();
-        headerLayout.setAlignItems(Alignment.CENTER);
-        headerLayout.setJustifyContentMode(JustifyContentMode.BETWEEN);
+        headerLayout.setAlignItems(FlexComponent.Alignment.CENTER);
+        headerLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
         
         RouterLink backLink = new RouterLink("← Back to Dashboard", OrganizerDashboardView.class);
         backLink.getStyle().set("text-decoration", "none");

@@ -9,14 +9,18 @@ import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.orderedlayout.FlexComponent.JustifyContentMode;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.BigDecimalField;
 import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.data.binder.BeanValidationBinder;
 import com.vaadin.flow.data.binder.ValidationException;
+import com.vaadin.flow.data.binder.ValidationResult;
+import com.vaadin.flow.data.binder.ValueContext;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
@@ -25,6 +29,7 @@ import com.vaadin.flow.router.RouterLink;
 import com.xenplan.app.domain.entity.Event;
 import com.xenplan.app.domain.entity.User;
 import com.xenplan.app.domain.enums.EventCategory;
+import com.xenplan.app.domain.enums.EventStatus;
 import com.xenplan.app.domain.exception.BusinessException;
 import com.xenplan.app.domain.exception.ConflictException;
 import com.xenplan.app.domain.exception.NotFoundException;
@@ -51,6 +56,7 @@ public class EventFormView extends VerticalLayout implements BeforeEnterObserver
     private H2 titleComponent;
     
     private final TextField titleField = new TextField("Title");
+    private final Span titleCharCount = new Span();
     private final TextArea descriptionField = new TextArea("Description");
     private final ComboBox<EventCategory> categoryField = new ComboBox<>("Category");
     private final DateTimePicker startDateField = new DateTimePicker("Start Date & Time");
@@ -63,6 +69,8 @@ public class EventFormView extends VerticalLayout implements BeforeEnterObserver
     
     private final Button saveButton = new Button("Save");
     private final Button cancelButton = new Button("Cancel");
+    
+    private Event currentEvent;
 
     public EventFormView(EventService eventService) {
         this.eventService = eventService;
@@ -120,8 +128,25 @@ public class EventFormView extends VerticalLayout implements BeforeEnterObserver
         
         // Configure fields
         titleField.setRequired(true);
+        titleField.setMinLength(5);
         titleField.setMaxLength(100);
         titleField.setWidthFull();
+        
+        // Character count for title
+        titleCharCount.getStyle().set("font-size", "var(--lumo-font-size-xs)");
+        titleCharCount.getStyle().set("color", "var(--lumo-secondary-text-color)");
+        titleCharCount.setText("0 / 100 characters (minimum 5)");
+        titleField.addValueChangeListener(e -> {
+            int length = e.getValue() == null ? 0 : e.getValue().length();
+            titleCharCount.setText(length + " / 100 characters (minimum 5)");
+            if (length < 5) {
+                titleCharCount.getStyle().set("color", "var(--lumo-error-color)");
+            } else if (length <= 100) {
+                titleCharCount.getStyle().set("color", "var(--lumo-success-color)");
+            } else {
+                titleCharCount.getStyle().set("color", "var(--lumo-error-color)");
+            }
+        });
         
         descriptionField.setMaxLength(1000);
         descriptionField.setWidthFull();
@@ -159,7 +184,10 @@ public class EventFormView extends VerticalLayout implements BeforeEnterObserver
         imageUrlField.setWidthFull();
         
         // Add fields to form
-        formLayout.add(titleField, 2);
+        VerticalLayout titleLayout = new VerticalLayout(titleField, titleCharCount);
+        titleLayout.setSpacing(false);
+        titleLayout.setPadding(false);
+        formLayout.add(titleLayout, 2);
         formLayout.add(descriptionField, 2);
         formLayout.add(categoryField, 1);
         formLayout.add(startDateField, 1);
@@ -188,7 +216,24 @@ public class EventFormView extends VerticalLayout implements BeforeEnterObserver
         
         binder.forField(endDateField)
                 .asRequired("End date is required")
+                .withValidator((endDate, context) -> {
+                    LocalDateTime startDate = startDateField.getValue();
+                    if (startDate != null && endDate != null) {
+                        if (endDate.isBefore(startDate) || endDate.isEqual(startDate)) {
+                            return ValidationResult.error("End date must be after start date");
+                        }
+                    }
+                    return ValidationResult.ok();
+                })
                 .bind(Event::getEndDate, Event::setEndDate);
+        
+        // Add cross-field validation: update endDate validation when startDate changes
+        startDateField.addValueChangeListener(e -> {
+            if (e.getValue() != null) {
+                endDateField.setMin(e.getValue().plusMinutes(1));
+                binder.validate();
+            }
+        });
         
         binder.forField(venueField)
                 .asRequired("Venue is required")
@@ -211,9 +256,16 @@ public class EventFormView extends VerticalLayout implements BeforeEnterObserver
         
         // Buttons
         saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        saveButton.setEnabled(false); // Disabled until form is valid
         saveButton.addClickListener(e -> handleSave());
         
         cancelButton.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate(MyEventsView.class)));
+        
+        // Enable/disable save button based on binder validity
+        binder.addStatusChangeListener(e -> {
+            boolean isValid = binder.isValid();
+            saveButton.setEnabled(isValid);
+        });
         
         HorizontalLayout buttonLayout = new HorizontalLayout(saveButton, cancelButton);
         buttonLayout.setWidthFull();
@@ -227,6 +279,8 @@ public class EventFormView extends VerticalLayout implements BeforeEnterObserver
         Event event = eventService.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Event not found"));
         
+        this.currentEvent = event;
+        
         // Check permissions
         boolean isCreator = event.getOrganizer().getId().equals(currentUser.getId());
         boolean isAdmin = currentUser.getRole().name().equals("ADMIN");
@@ -238,14 +292,37 @@ public class EventFormView extends VerticalLayout implements BeforeEnterObserver
         }
         
         // Check if event can be edited
-        if (event.getStatus() == com.xenplan.app.domain.enums.EventStatus.PUBLISHED || 
-            event.getStatus() == com.xenplan.app.domain.enums.EventStatus.FINISHED) {
+        if (event.getStatus() == EventStatus.PUBLISHED || 
+            event.getStatus() == EventStatus.FINISHED) {
             Notification.show("Cannot edit PUBLISHED or FINISHED events", 5000, Notification.Position.MIDDLE);
             getUI().ifPresent(ui -> ui.navigate(MyEventsView.class));
             return;
         }
         
         binder.readBean(event);
+        
+        // Lock fields if event is PUBLISHED or FINISHED (defensive check)
+        lockFieldsIfNeeded(event.getStatus());
+    }
+    
+    private void lockFieldsIfNeeded(EventStatus status) {
+        boolean isLocked = status == EventStatus.PUBLISHED || status == EventStatus.FINISHED;
+        
+        titleField.setEnabled(!isLocked);
+        descriptionField.setEnabled(!isLocked);
+        categoryField.setEnabled(!isLocked);
+        startDateField.setEnabled(!isLocked);
+        endDateField.setEnabled(!isLocked);
+        venueField.setEnabled(!isLocked);
+        cityField.setEnabled(!isLocked);
+        maxCapacityField.setEnabled(!isLocked);
+        unitPriceField.setEnabled(!isLocked);
+        imageUrlField.setEnabled(!isLocked);
+        
+        if (isLocked) {
+            Notification.show("This event is " + status.name() + " and cannot be modified", 
+                    3000, Notification.Position.MIDDLE);
+        }
     }
 
     private void handleSave() {

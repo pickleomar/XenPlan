@@ -151,5 +151,30 @@ public class UserServiceImpl implements UserService {
         user.setRole(newRole);
         userRepository.save(user);
     }
+
+    @Override
+    public void changePassword(UUID userId, String currentPassword, String newPassword, User currentUser) {
+        // Business rule: Only self can change password
+        if (!userId.equals(currentUser.getId())) {
+            throw new ForbiddenException("You can only change your own password");
+        }
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("User not found"));
+
+        // Verify current password
+        if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+            throw new ConflictException("Current password is incorrect");
+        }
+
+        // Validate new password length
+        if (newPassword == null || newPassword.length() < 8) {
+            throw new ConflictException("New password must be at least 8 characters");
+        }
+
+        // Update password
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+    }
 }
 
