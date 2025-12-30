@@ -68,4 +68,12 @@ public class Reservation {
     @Size(max = 500, message = "Comment must not exceed 500 characters")
     @Column(length = 500)
     private String comment;
+
+    @PrePersist
+    void onCreate() {
+        this.reservationDate = LocalDateTime.now();
+        if (this.status == null) {
+            this.status = ReservationStatus.PENDING;
+        }
+    }
 }
