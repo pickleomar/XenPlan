@@ -12,7 +12,7 @@ databaseChangeLog:
             columns:
               - column:
                   name: id
-                  type: char(36)
+                  type: uuid
                   constraints:
                     primaryKey: true
                     nullable: false
@@ -97,7 +97,7 @@ databaseChangeLog:
             columns:
               - column:
                   name: id
-                  type: char(36)
+                  type: uuid
                   constraints:
                     primaryKey: true
                     nullable: false
@@ -166,7 +166,7 @@ databaseChangeLog:
 
               - column:
                   name: organizer_id
-                  type: char(36)
+                  type: uuid
                   constraints:
                     nullable: false
 
@@ -229,20 +229,20 @@ databaseChangeLog:
             columns:
               - column:
                   name: id
-                  type: char(36)
+                  type: uuid
                   constraints:
                     primaryKey: true
                     nullable: false
 
               - column:
                   name: user_id
-                  type: char(36)
+                  type: uuid
                   constraints:
                     nullable: false
 
               - column:
                   name: event_id
-                  type: char(36)
+                  type: uuid
                   constraints:
                     nullable: false
 
