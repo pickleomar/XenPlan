@@ -5,6 +5,7 @@ import com.xenplan.app.domain.entity.User;
 import com.xenplan.app.domain.enums.EventCategory;
 import com.xenplan.app.domain.enums.EventStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -33,7 +34,26 @@ public interface EventRepository extends JpaRepository<Event, UUID> {
     List<Event> findByOrganizerOrderByCreatedAtDesc(User organizer);
     
     /**
+     * Find events by organizer ID, ordered by creation date descending
+     * This method uses JOIN FETCH to eagerly load the organizer to avoid lazy loading issues
+     */
+    @Query("SELECT e FROM Event e LEFT JOIN FETCH e.organizer WHERE e.organizer.id = :organizerId ORDER BY e.createdAt DESC")
+    List<Event> findByOrganizerIdOrderByCreatedAtDesc(UUID organizerId);
+    
+    /**
      * Find events by status and end date before (for auto-marking FINISHED)
      */
     List<Event> findByStatusInAndEndDateBefore(List<EventStatus> statuses, LocalDateTime endDate);
+    
+    /**
+     * Find all events with organizer eagerly loaded (for admin view)
+     */
+    @Query("SELECT e FROM Event e LEFT JOIN FETCH e.organizer ORDER BY e.createdAt DESC")
+    List<Event> findAllWithOrganizer();
+    
+    /**
+     * Find event by ID with organizer eagerly loaded (for event details view)
+     */
+    @Query("SELECT e FROM Event e LEFT JOIN FETCH e.organizer WHERE e.id = :eventId")
+    java.util.Optional<Event> findByIdWithOrganizer(UUID eventId);
 }

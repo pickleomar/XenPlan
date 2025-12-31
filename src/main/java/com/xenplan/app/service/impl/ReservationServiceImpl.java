@@ -146,6 +146,13 @@ public class ReservationServiceImpl implements ReservationService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<Reservation> getUserReservations(User user) {
+        // Uses the new repository method with fetch join
+        return reservationRepository.findByUserWithDetails(user);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Optional<Reservation> verifyReservationByCode(String reservationCode) {
         return reservationRepository.findByReservationCode(reservationCode);
     }
@@ -192,4 +199,3 @@ public class ReservationServiceImpl implements ReservationService {
         return code;
     }
 }
-

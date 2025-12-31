@@ -141,7 +141,8 @@ public class MyReservationsView extends VerticalLayout {
     }
 
     private void loadReservations() {
-        List<Reservation> reservations = reservationService.getReservationsByUser(currentUser);
+        // Fix: Use the new service method that eagerly fetches Event details
+        List<Reservation> reservations = reservationService.getUserReservations(currentUser);
         reservationsGrid.setItems(reservations);
         
         if (reservations.isEmpty()) {
@@ -182,4 +183,3 @@ public class MyReservationsView extends VerticalLayout {
         return String.format("$%.2f", price);
     }
 }
-

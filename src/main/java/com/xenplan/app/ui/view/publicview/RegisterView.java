@@ -4,8 +4,10 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.EmailField;
 import com.vaadin.flow.component.textfield.PasswordField;
@@ -53,15 +55,21 @@ public class RegisterView extends VerticalLayout implements BeforeEnterObserver 
     private void setupForm() {
         VerticalLayout formContainer = new VerticalLayout();
         formContainer.setWidth("400px");
-        formContainer.setPadding(false);
-        formContainer.setSpacing(false);
-        
+        formContainer.setPadding(true);
+        formContainer.setSpacing(true);
+        formContainer.setAlignItems(Alignment.CENTER); // Center Logo and Title inside the card
+
+        // --- Image Logo Configuration ---
+        Image logo = new Image("images/xenplan-logo.png", "XenPlan");
+        logo.setWidth("200px"); 
+        logo.getStyle().set("margin-bottom", "1rem");
+
         H2 title = new H2("Create Account");
-        title.getStyle().set("margin-bottom", "1rem");
         
         Paragraph description = new Paragraph("Join XenPlan to reserve events and manage your bookings.");
         description.getStyle().set("color", "var(--lumo-secondary-text-color)");
-        description.getStyle().set("margin-bottom", "2rem");
+        description.getStyle().set("text-align", "center");
+        description.getStyle().set("margin-bottom", "1.5rem");
         
         FormLayout formLayout = new FormLayout();
         formLayout.setResponsiveSteps(
@@ -115,7 +123,7 @@ public class RegisterView extends VerticalLayout implements BeforeEnterObserver 
         binder.forField(passwordField)
                 .asRequired("Password is required")
                 .withValidator(pwd -> pwd != null && pwd.length() >= 8, "Password must be at least 8 characters")
-                .bind(user -> "", (user, pwd) -> {}); // Don't bind to entity, handle separately
+                .bind(user -> "", (user, pwd) -> {}); 
         
         // Custom validation for password confirmation
         confirmPasswordField.addValueChangeListener(e -> {
@@ -150,7 +158,8 @@ public class RegisterView extends VerticalLayout implements BeforeEnterObserver 
         buttonLayout.setSpacing(true);
         buttonLayout.setPadding(false);
         
-        formContainer.add(title, description, formLayout, buttonLayout);
+        // --- FIXED: Add logo to the container instead of invalid call ---
+        formContainer.add(logo, title, description, formLayout, buttonLayout);
         add(formContainer);
     }
 
@@ -224,4 +233,3 @@ public class RegisterView extends VerticalLayout implements BeforeEnterObserver 
         }
     }
 }
-

@@ -35,6 +35,11 @@ public interface ReservationService {
      * Get all reservations for a user
      */
     List<Reservation> getReservationsByUser(User user);
+
+    /**
+     * Get all reservations for a user with eager loading of related entities
+     */
+    List<Reservation> getUserReservations(User user);
     
     /**
      * Verify reservation by code
@@ -51,4 +56,3 @@ public interface ReservationService {
      */
     Optional<Reservation> findById(UUID reservationId);
 }
-

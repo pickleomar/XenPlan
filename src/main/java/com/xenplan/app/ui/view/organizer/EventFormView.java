@@ -3,12 +3,12 @@ package com.xenplan.app.ui.view.organizer;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
-import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.datetimepicker.DateTimePicker;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.H2;
-import com.vaadin.flow.component.html.Paragraph;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.FlexComponent.JustifyContentMode;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -16,11 +16,9 @@ import com.vaadin.flow.component.textfield.BigDecimalField;
 import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
-import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.data.binder.BeanValidationBinder;
 import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.data.binder.ValidationResult;
-import com.vaadin.flow.data.binder.ValueContext;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
@@ -33,12 +31,11 @@ import com.xenplan.app.domain.enums.EventStatus;
 import com.xenplan.app.domain.exception.BusinessException;
 import com.xenplan.app.domain.exception.ConflictException;
 import com.xenplan.app.domain.exception.NotFoundException;
+import com.xenplan.app.security.SecurityUtils;
 import com.xenplan.app.service.EventService;
 import com.xenplan.app.ui.layout.MainLayout;
-import com.xenplan.app.security.SecurityUtils;
-
 import jakarta.annotation.security.RolesAllowed;
-import java.math.BigDecimal;
+
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -80,10 +77,11 @@ public class EventFormView extends VerticalLayout implements BeforeEnterObserver
             return;
         }
         
+        // 1. CENTER THE MAIN VIEW
+        setSizeFull(); // Fill the screen
         setPadding(true);
         setSpacing(true);
-        setWidthFull();
-        setMaxWidth("800px");
+        setAlignItems(FlexComponent.Alignment.CENTER); // Center children horizontally
         
         setupForm();
     }
@@ -112,6 +110,13 @@ public class EventFormView extends VerticalLayout implements BeforeEnterObserver
     }
 
     private void setupForm() {
+        // 2. CREATE A CONTAINER FOR THE CONTENT
+        VerticalLayout contentContainer = new VerticalLayout();
+        contentContainer.setWidthFull();
+        contentContainer.setMaxWidth("800px"); // Limit width for readability
+        contentContainer.setSpacing(true);
+        contentContainer.setPadding(false);
+
         titleComponent = new H2(isEditMode ? "Edit Event" : "Create Event");
         titleComponent.getStyle().set("margin-top", "0");
         
@@ -227,7 +232,7 @@ public class EventFormView extends VerticalLayout implements BeforeEnterObserver
                 })
                 .bind(Event::getEndDate, Event::setEndDate);
         
-        // Add cross-field validation: update endDate validation when startDate changes
+        // Add cross-field validation
         startDateField.addValueChangeListener(e -> {
             if (e.getValue() != null) {
                 endDateField.setMin(e.getValue().plusMinutes(1));
@@ -256,12 +261,11 @@ public class EventFormView extends VerticalLayout implements BeforeEnterObserver
         
         // Buttons
         saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        saveButton.setEnabled(false); // Disabled until form is valid
+        saveButton.setEnabled(false); 
         saveButton.addClickListener(e -> handleSave());
         
         cancelButton.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate(MyEventsView.class)));
         
-        // Enable/disable save button based on binder validity
         binder.addStatusChangeListener(e -> {
             boolean isValid = binder.isValid();
             saveButton.setEnabled(isValid);
@@ -272,7 +276,11 @@ public class EventFormView extends VerticalLayout implements BeforeEnterObserver
         buttonLayout.setJustifyContentMode(JustifyContentMode.END);
         buttonLayout.setSpacing(true);
         
-        add(titleComponent, backLink, formLayout, buttonLayout);
+        // 3. ADD COMPONENTS TO CONTAINER
+        contentContainer.add(titleComponent, backLink, formLayout, buttonLayout);
+        
+        // 4. ADD CONTAINER TO MAIN VIEW
+        add(contentContainer);
     }
 
     private void loadEvent() {
@@ -301,7 +309,6 @@ public class EventFormView extends VerticalLayout implements BeforeEnterObserver
         
         binder.readBean(event);
         
-        // Lock fields if event is PUBLISHED or FINISHED (defensive check)
         lockFieldsIfNeeded(event.getStatus());
     }
     
@@ -366,4 +373,3 @@ public class EventFormView extends VerticalLayout implements BeforeEnterObserver
         }
     }
 }
-

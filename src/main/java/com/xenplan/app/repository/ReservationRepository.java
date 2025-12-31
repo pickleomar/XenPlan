@@ -1,6 +1,7 @@
 package com.xenplan.app.repository;
 
 import com.xenplan.app.domain.entity.Reservation;
+import com.xenplan.app.domain.entity.User;
 import com.xenplan.app.domain.enums.ReservationStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -16,6 +17,12 @@ public interface ReservationRepository extends JpaRepository<Reservation, UUID> 
      * Find reservations by user ID, ordered by reservation date descending
      */
     List<Reservation> findByUserIdOrderByReservationDateDesc(UUID userId);
+
+    /**
+     * Find reservations by user with eager fetching of Event and Organizer to prevent LazyInitializationException
+     */
+    @Query("SELECT r FROM Reservation r JOIN FETCH r.event e LEFT JOIN FETCH e.organizer WHERE r.user = :user ORDER BY r.reservationDate DESC")
+    List<Reservation> findByUserWithDetails(@Param("user") User user);
     
     /**
      * Find reservation by unique reservation code

@@ -10,6 +10,8 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
 import com.xenplan.app.security.SecurityUtils;
+import com.vaadin.flow.component.html.Image;
+
 
 @Route("login")
 @PageTitle("Login | XenPlan")
@@ -31,7 +33,12 @@ public class LoginView extends VerticalLayout implements BeforeEnterObserver {
         loginForm.setAction("login");
 
         LoginI18n i18n = LoginI18n.createDefault();
-        i18n.getForm().setTitle("XenPlan");
+        //i18n.getForm().setTitle("XenPlan");
+        Image logo = new Image("images/xenplan-logo.png", "XenPlan");
+        logo.setWidth("250px"); // Larger size for login screen
+        logo.getStyle().set("margin-bottom", "1.5rem");
+
+        add(logo, loginForm);
         i18n.getForm().setUsername("Email");
         i18n.getForm().setPassword("Password");
         i18n.getForm().setSubmit("Login");
