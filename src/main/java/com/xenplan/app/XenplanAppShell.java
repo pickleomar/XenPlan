@@ -4,6 +4,7 @@ import com.vaadin.flow.component.page.AppShellConfigurator;
 import com.vaadin.flow.theme.Theme;
 import com.vaadin.flow.theme.lumo.Lumo;
 
-@Theme(value = "xenplan", variant = Lumo.DARK)
+// UNDO: Removed value="xenplan". This tells Vaadin to use the built-in Lumo theme.
+@Theme(variant = Lumo.DARK)
 public class XenplanAppShell implements AppShellConfigurator {
 }
