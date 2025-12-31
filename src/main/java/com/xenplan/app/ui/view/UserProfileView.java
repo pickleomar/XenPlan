@@ -18,7 +18,6 @@ import com.vaadin.flow.data.binder.BeanValidationBinder;
 import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import com.vaadin.flow.router.RouterLink;
 import com.xenplan.app.domain.entity.User;
 import com.xenplan.app.domain.enums.Role;
 import com.xenplan.app.domain.exception.BusinessException;
@@ -60,16 +59,27 @@ public class UserProfileView extends VerticalLayout {
             return;
         }
         
+        // --- 1. CENTER THE MAIN VIEW ---
+        setSizeFull(); 
         setPadding(true);
         setSpacing(true);
-        setWidthFull();
-        setMaxWidth("800px");
+        setAlignItems(Alignment.CENTER); // Center horizontally
+        setJustifyContentMode(JustifyContentMode.CENTER); // Center vertically
         
         setupView();
         loadUserData();
     }
 
     private void setupView() {
+        // --- 2. CONTAINER FOR CONTENT ---
+        // This holds all elements together within a max-width
+        VerticalLayout contentContainer = new VerticalLayout();
+        contentContainer.setMaxWidth("800px");
+        contentContainer.setWidthFull();
+        contentContainer.setSpacing(true);
+        contentContainer.setPadding(false);
+        contentContainer.setAlignItems(Alignment.CENTER); // Center items inside the card
+        
         H2 title = new H2("My Profile");
         title.getStyle().set("margin-top", "0");
         
@@ -92,8 +102,7 @@ public class UserProfileView extends VerticalLayout {
         subtitle.getStyle().set("color", "var(--lumo-secondary-text-color)");
         subtitle.getStyle().set("margin-top", "0");
         subtitle.getStyle().set("margin-bottom", "1rem");
-        
-        add(title, badgesLayout, subtitle);
+        subtitle.getStyle().set("text-align", "center"); // Center text
         
         // Profile form
         FormLayout formLayout = new FormLayout();
@@ -113,7 +122,7 @@ public class UserProfileView extends VerticalLayout {
         lastNameField.setWidthFull();
         
         emailField.setRequired(true);
-        emailField.setReadOnly(true); // Email is read-only for security
+        emailField.setReadOnly(true); 
         emailField.setWidthFull();
         emailField.setHelperText("Email cannot be changed");
         
@@ -151,10 +160,13 @@ public class UserProfileView extends VerticalLayout {
         
         HorizontalLayout buttonLayout = new HorizontalLayout(saveButton, changePasswordButton);
         buttonLayout.setWidthFull();
-        buttonLayout.setJustifyContentMode(com.vaadin.flow.component.orderedlayout.FlexComponent.JustifyContentMode.START);
+        // Center the buttons to match the rest of the layout
+        buttonLayout.setJustifyContentMode(JustifyContentMode.CENTER); 
         buttonLayout.setSpacing(true);
         
-        add(formLayout, buttonLayout);
+        // --- 3. ADD EVERYTHING TO CONTAINER, THEN CONTAINER TO VIEW ---
+        contentContainer.add(title, badgesLayout, subtitle, formLayout, buttonLayout);
+        add(contentContainer);
     }
 
     private void loadUserData() {
@@ -186,7 +198,7 @@ public class UserProfileView extends VerticalLayout {
             User updatedUser = userService.updateUser(currentUser.getId(), userData, currentUser);
             Notification.show("Profile updated successfully", 5000, Notification.Position.MIDDLE);
             
-            // Update badges if status changed (though users can't change their own status)
+            // Update badges if status changed
             if (updatedUser.getActive() != null) {
                 statusBadge.setText(Boolean.TRUE.equals(updatedUser.getActive()) ? "Active" : "Inactive");
                 if (Boolean.TRUE.equals(updatedUser.getActive())) {
@@ -233,7 +245,6 @@ public class UserProfileView extends VerticalLayout {
         confirmPasswordField.setRequired(true);
         confirmPasswordField.setWidthFull();
         
-        // Validation: new password and confirm must match
         confirmPasswordField.addValueChangeListener(e -> {
             if (!e.getValue().equals(newPasswordField.getValue())) {
                 confirmPasswordField.setErrorMessage("Passwords do not match");
@@ -260,7 +271,6 @@ public class UserProfileView extends VerticalLayout {
             String newPassword = newPasswordField.getValue();
             String confirmPassword = confirmPasswordField.getValue();
             
-            // Validate fields
             if (currentPassword == null || currentPassword.isEmpty()) {
                 Notification.show("Current password is required", 3000, Notification.Position.MIDDLE);
                 return;
@@ -316,7 +326,6 @@ public class UserProfileView extends VerticalLayout {
         Div badge = new Div();
         badge.setText(text);
         badge.getStyle().set("display", "inline-block");
-        // Set background color with 10% opacity
         if (color.contains("success")) {
             badge.getStyle().set("background", "var(--lumo-success-color-10pct)");
         } else if (color.contains("error")) {

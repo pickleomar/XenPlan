@@ -14,7 +14,7 @@ public class MainLayout extends AppLayout implements RouterLayout {
         setPrimarySection(Section.NAVBAR);
         addToNavbar(new NavBar());
         
-        // Force Dark Mode by default for that "Premium SaaS" vibe
+        // Force Dark Mode by default
         UI.getCurrent().getElement().getThemeList().add(Lumo.DARK);
     }
 }

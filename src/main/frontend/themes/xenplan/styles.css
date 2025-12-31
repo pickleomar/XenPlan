@@ -1,0 +1,114 @@
+/* Dark Mode Overrides - The "Premium" Look */
+[theme~="dark"] {
+    /* Main Background - Deep Black */
+    --lumo-base-color: #0F0F0F;
+    /* Surfaces/Cards - Dark Grey */
+    --lumo-contrast-5pct: #1A1A1A;
+    --lumo-contrast-10pct: #252525;
+    --lumo-contrast-20pct: #333333;
+    --lumo-contrast-30pct: #404040;
+    
+    /* Text Colors */
+    --lumo-body-text-color: #E0E0E0;
+    --lumo-header-text-color: #FFFFFF;
+    --lumo-secondary-text-color: #B0B0B0;
+    --lumo-tertiary-text-color: #808080;
+    
+    /* Primary Brand Color - Electric Blue for pop against Black */
+    --lumo-primary-color: #3B82F6;
+    --lumo-primary-text-color: #3B82F6;
+    --lumo-primary-color-10pct: rgba(59, 130, 246, 0.1);
+    --lumo-primary-color-50pct: rgba(59, 130, 246, 0.5);
+    
+    /* Success Color */
+    --lumo-success-color: #10B981;
+    --lumo-success-color-10pct: rgba(16, 185, 129, 0.1);
+    
+    /* Error Color */
+    --lumo-error-color: #EF4444;
+    --lumo-error-color-10pct: rgba(239, 68, 68, 0.1);
+    
+    /* Global Border Radius for Modern Feel */
+    --lumo-border-radius-s: 8px;
+    --lumo-border-radius-m: 12px;
+    --lumo-border-radius-l: 16px;
+    --lumo-border-radius-xl: 20px;
+}
+
+/* Button Modernization */
+vaadin-button {
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    transition: all 0.2s ease-in-out;
+    border-radius: var(--lumo-border-radius-m);
+}
+
+vaadin-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+vaadin-button:active {
+    transform: translateY(0);
+}
+
+/* Card Styling for Dashboards */
+.dashboard-card {
+    background-color: var(--lumo-base-color);
+    border: 1px solid var(--lumo-contrast-10pct);
+    border-radius: var(--lumo-border-radius-l);
+    padding: var(--lumo-space-l);
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+}
+
+[theme~="dark"] .dashboard-card {
+    background-color: var(--lumo-contrast-5pct); /* Dark Grey Card */
+    border: 1px solid var(--lumo-contrast-20pct);
+}
+
+.dashboard-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--lumo-primary-color-50pct);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* Grid styling improvements */
+vaadin-grid {
+    border-radius: var(--lumo-border-radius-m);
+    overflow: hidden;
+}
+
+/* Form field improvements */
+vaadin-text-field,
+vaadin-text-area,
+vaadin-combo-box,
+vaadin-date-picker,
+vaadin-date-time-picker {
+    border-radius: var(--lumo-border-radius-m);
+}
+
+/* App Layout improvements */
+vaadin-app-layout {
+    background-color: var(--lumo-base-color);
+}
+
+[theme~="dark"] vaadin-app-layout {
+    background-color: var(--lumo-base-color);
+}
+
+/* Navigation improvements */
+vaadin-drawer-toggle {
+    color: var(--lumo-body-text-color);
+}
+
+/* Badge styling */
+.badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--lumo-border-radius-m);
+    font-size: var(--lumo-font-size-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}

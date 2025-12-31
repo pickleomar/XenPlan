@@ -1,0 +1,23 @@
+/* Force Dark Mode variables */
+[theme~="dark"] {
+    /* THE BACKGROUND: Very deep grey, almost pure black */
+    --lumo-base-color: #050505;
+
+    /* LAYERS: Slightly lighter for cards/surfaces so they pop */
+    --lumo-contrast-5pct:  #141414;
+    --lumo-contrast-10pct: #1F1F1F;
+    --lumo-contrast-20pct: #2A2A2A;
+
+    /* TEXT: Brighten the text so it is readable on the dark background */
+    --lumo-header-text-color: #FFFFFF;
+    --lumo-body-text-color: #E0E0E0;
+    --lumo-secondary-text-color: #A0A0A0;
+
+    /* ACCENT: Make the primary blue pop more */
+    --lumo-primary-color: #3b82f6;
+}
+
+/* Ensure the body tag takes the color */
+body {
+    background-color: var(--lumo-base-color);
+}

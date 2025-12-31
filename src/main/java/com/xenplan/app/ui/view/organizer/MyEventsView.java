@@ -3,6 +3,7 @@ package com.xenplan.app.ui.view.organizer;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Paragraph;
@@ -12,9 +13,9 @@ import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.router.RouteParameters;
 import com.vaadin.flow.router.RouterLink;
 import com.xenplan.app.domain.entity.Event;
 import com.xenplan.app.domain.entity.User;
@@ -24,6 +25,7 @@ import com.xenplan.app.domain.exception.ConflictException;
 import com.xenplan.app.service.EventService;
 import com.xenplan.app.ui.component.ConfirmDialog;
 import com.xenplan.app.ui.layout.MainLayout;
+import com.xenplan.app.ui.view.publicview.EventDetailsView;
 import com.xenplan.app.security.SecurityUtils;
 
 import jakarta.annotation.security.RolesAllowed;
@@ -54,11 +56,7 @@ public class MyEventsView extends VerticalLayout {
             this.currentUser = SecurityUtils.getCurrentUser();
             
             if (currentUser == null) {
-                Paragraph errorMsg = new Paragraph("Authentication required. Please log in.");
-                errorMsg.getStyle().set("color", "var(--lumo-error-color)");
-                errorMsg.getStyle().set("text-align", "center");
-                errorMsg.getStyle().set("padding", "2rem");
-                add(errorMsg);
+                add(new Paragraph("Authentication required. Please log in."));
                 return;
             }
             
@@ -66,11 +64,7 @@ public class MyEventsView extends VerticalLayout {
             setupGrid();
             loadEvents();
         } catch (Exception e) {
-            Paragraph errorMsg = new Paragraph("Error initializing view: " + e.getMessage());
-            errorMsg.getStyle().set("color", "var(--lumo-error-color)");
-            errorMsg.getStyle().set("text-align", "center");
-            errorMsg.getStyle().set("padding", "2rem");
-            add(errorMsg);
+            add(new Paragraph("Error initializing view: " + e.getMessage()));
         }
     }
 
@@ -90,15 +84,11 @@ public class MyEventsView extends VerticalLayout {
         titleSection.setPadding(false);
         
         H2 title = new H2("My Events");
-        title.getStyle().set("margin-top", "0");
-        title.getStyle().set("margin-bottom", "0.25rem");
-        title.getStyle().set("font-size", "var(--lumo-font-size-xxxl)");
-        title.getStyle().set("font-weight", "600");
+        title.getStyle().set("margin", "0 0 0.25rem 0");
         
         Paragraph subtitle = new Paragraph("Manage and organize your events");
         subtitle.getStyle().set("color", "var(--lumo-secondary-text-color)");
-        subtitle.getStyle().set("margin-top", "0");
-        subtitle.getStyle().set("margin-bottom", "0");
+        subtitle.getStyle().set("margin", "0");
         
         titleSection.add(title, subtitle);
         
@@ -106,15 +96,16 @@ public class MyEventsView extends VerticalLayout {
         buttonLayout.setSpacing(true);
         buttonLayout.setAlignItems(FlexComponent.Alignment.CENTER);
         
-        RouterLink backLink = new RouterLink("", OrganizerDashboardView.class);
-        backLink.getStyle().set("text-decoration", "none");
+        RouterLink backLink = new RouterLink(OrganizerDashboardView.class);
         Button backButton = new Button("Dashboard", new Icon(VaadinIcon.ARROW_LEFT));
         backButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         backLink.add(backButton);
         
+        // --- FIX: Pass "new" as parameter for Create Event ---
+        // Without this parameter, the RouterLink crashes because the route expects :eventId
+        RouterLink createLink = new RouterLink(EventFormView.class, new RouteParameters("eventId", "new"));
         Button createButton = new Button("Create Event", new Icon(VaadinIcon.PLUS));
         createButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        RouterLink createLink = new RouterLink("", EventFormView.class);
         createLink.add(createButton);
         createLink.getStyle().set("text-decoration", "none");
         
@@ -129,36 +120,13 @@ public class MyEventsView extends VerticalLayout {
     private void setupGrid() {
         eventsGrid = new Grid<>(Event.class, false);
         eventsGrid.setWidthFull();
-        eventsGrid.setAllRowsVisible(true);
-        eventsGrid.addThemeVariants(com.vaadin.flow.component.grid.GridVariant.LUMO_ROW_STRIPES);
+        eventsGrid.addThemeVariants(GridVariant.LUMO_ROW_STRIPES);
         
-        // Title column with styling
-        eventsGrid.addColumn(Event::getTitle)
-                .setHeader("Title")
-                .setSortable(true)
-                .setAutoWidth(true)
-                .setFlexGrow(2);
+        eventsGrid.addColumn(Event::getTitle).setHeader("Title").setSortable(true).setAutoWidth(true).setFlexGrow(2);
+        eventsGrid.addColumn(e -> e.getCategory().name()).setHeader("Category").setSortable(true).setAutoWidth(true);
+        eventsGrid.addColumn(e -> e.getStartDate().format(DATE_FORMATTER)).setHeader("Start Date").setSortable(true).setAutoWidth(true);
+        eventsGrid.addColumn(e -> e.getVenue() + ", " + e.getCity()).setHeader("Location").setSortable(true).setAutoWidth(true).setFlexGrow(1);
         
-        // Category column
-        eventsGrid.addColumn(e -> e.getCategory().name())
-                .setHeader("Category")
-                .setSortable(true)
-                .setAutoWidth(true);
-        
-        // Start Date column
-        eventsGrid.addColumn(e -> e.getStartDate().format(DATE_FORMATTER))
-                .setHeader("Start Date")
-                .setSortable(true)
-                .setAutoWidth(true);
-        
-        // Location column
-        eventsGrid.addColumn(e -> e.getVenue() + ", " + e.getCity())
-                .setHeader("Location")
-                .setSortable(true)
-                .setAutoWidth(true)
-                .setFlexGrow(1);
-        
-        // Status column with badge styling
         eventsGrid.addComponentColumn(event -> {
             Div badge = new Div();
             badge.setText(event.getStatus().name());
@@ -166,214 +134,124 @@ public class MyEventsView extends VerticalLayout {
             badge.getStyle().set("border-radius", "var(--lumo-border-radius-m)");
             badge.getStyle().set("font-size", "var(--lumo-font-size-xs)");
             badge.getStyle().set("font-weight", "600");
-            badge.getStyle().set("text-transform", "uppercase");
-            badge.getStyle().set("letter-spacing", "0.05em");
             
-            switch (event.getStatus()) {
-                case DRAFT:
-                    badge.getStyle().set("background-color", "var(--lumo-contrast-10pct)");
-                    badge.getStyle().set("color", "var(--lumo-secondary-text-color)");
-                    break;
-                case PUBLISHED:
-                    badge.getStyle().set("background-color", "var(--lumo-success-color-10pct)");
-                    badge.getStyle().set("color", "var(--lumo-success-color)");
-                    break;
-                case CANCELLED:
-                    badge.getStyle().set("background-color", "var(--lumo-error-color-10pct)");
-                    badge.getStyle().set("color", "var(--lumo-error-color)");
-                    break;
-                case FINISHED:
-                    badge.getStyle().set("background-color", "var(--lumo-contrast-5pct)");
-                    badge.getStyle().set("color", "var(--lumo-tertiary-text-color)");
-                    break;
-            }
+            String color = switch (event.getStatus()) {
+                case PUBLISHED -> "var(--lumo-success-color)";
+                case CANCELLED -> "var(--lumo-error-color)";
+                case FINISHED -> "var(--lumo-tertiary-text-color)";
+                default -> "var(--lumo-secondary-text-color)"; // DRAFT
+            };
+            
+            badge.getStyle().set("color", color);
+            badge.getStyle().set("background-color", color + "1A"); // 10% opacity
+            
             return badge;
-        })
-        .setHeader("Status")
-        .setAutoWidth(true);
+        }).setHeader("Status").setAutoWidth(true);
         
-        // Actions column with modern buttons
         eventsGrid.addComponentColumn(event -> {
             HorizontalLayout layout = new HorizontalLayout();
-            layout.setSpacing(true);
-            layout.setPadding(false);
-            layout.setAlignItems(FlexComponent.Alignment.CENTER);
             
-            // View button
+            // View Link
+            RouterLink viewLink = new RouterLink(EventDetailsView.class, new RouteParameters("eventId", event.getId().toString()));
             Button viewButton = new Button(new Icon(VaadinIcon.EYE));
             viewButton.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_TERTIARY);
-            viewButton.setTooltipText("View Event");
-            RouterLink viewLink = new RouterLink("", com.xenplan.app.ui.view.publicview.EventDetailsView.class, 
-                    new com.vaadin.flow.router.RouteParameters(
-                            java.util.Map.of("eventId", event.getId().toString())));
             viewLink.add(viewButton);
-            viewLink.getStyle().set("text-decoration", "none");
             layout.add(viewLink);
             
-            // Edit button (for DRAFT and PUBLISHED - allow editing published events)
+            // Edit Link (Draft/Published)
             if (event.getStatus() == EventStatus.DRAFT || event.getStatus() == EventStatus.PUBLISHED) {
+                RouterLink editLink = new RouterLink(EventFormView.class, new RouteParameters("eventId", event.getId().toString()));
                 Button editButton = new Button(new Icon(VaadinIcon.EDIT));
                 editButton.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_PRIMARY);
-                editButton.setTooltipText("Edit Event");
-                RouterLink editLink = new RouterLink("", EventFormView.class, 
-                        new com.vaadin.flow.router.RouteParameters(
-                                java.util.Map.of("eventId", event.getId().toString())));
                 editLink.add(editButton);
-                editLink.getStyle().set("text-decoration", "none");
                 layout.add(editLink);
             }
             
-            // Publish button (only for DRAFT)
+            // Publish (Draft only)
             if (event.getStatus() == EventStatus.DRAFT) {
                 Button publishButton = new Button(new Icon(VaadinIcon.CHECK));
                 publishButton.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_SUCCESS);
-                publishButton.setTooltipText("Publish Event");
                 publishButton.addClickListener(e -> handlePublishEvent(event.getId()));
                 layout.add(publishButton);
             }
             
-            // Cancel button (for PUBLISHED)
+            // Cancel (Published only)
             if (event.getStatus() == EventStatus.PUBLISHED) {
                 Button cancelButton = new Button(new Icon(VaadinIcon.BAN));
                 cancelButton.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_ERROR);
-                cancelButton.setTooltipText("Cancel Event");
                 cancelButton.addClickListener(e -> handleCancelEvent(event.getId()));
                 layout.add(cancelButton);
             }
             
-            // Delete button (for DRAFT and CANCELLED - allow deletion of cancelled events too)
+            // Delete (Draft/Cancelled)
             if (event.getStatus() == EventStatus.DRAFT || event.getStatus() == EventStatus.CANCELLED) {
                 Button deleteButton = new Button(new Icon(VaadinIcon.TRASH));
                 deleteButton.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_ERROR);
-                deleteButton.setTooltipText("Delete Event");
                 deleteButton.addClickListener(e -> handleDeleteEvent(event.getId()));
                 layout.add(deleteButton);
             }
             
             return layout;
-        })
-        .setHeader("Actions")
-        .setAutoWidth(true)
-        .setFlexGrow(0);
+        }).setHeader("Actions").setAutoWidth(true);
         
         add(eventsGrid);
     }
 
     private void loadEvents() {
         try {
-            if (currentUser == null) {
-                return;
-            }
-            // Use organizer ID instead of User entity to avoid detached entity issues
+            if (currentUser == null) return;
             List<Event> events = eventService.findByOrganizerId(currentUser.getId());
             eventsGrid.setItems(events);
-            
-            if (events.isEmpty()) {
-                VerticalLayout emptyState = new VerticalLayout();
-                emptyState.setAlignItems(FlexComponent.Alignment.CENTER);
-                emptyState.setSpacing(true);
-                emptyState.setPadding(true);
-                emptyState.getStyle().set("margin-top", "2rem");
-                
-                Icon icon = new Icon(VaadinIcon.CALENDAR_O);
-                icon.setSize("4rem");
-                icon.getStyle().set("color", "var(--lumo-secondary-text-color)");
-                
-                Paragraph message = new Paragraph("You don't have any events yet.");
-                message.getStyle().set("color", "var(--lumo-secondary-text-color)");
-                message.getStyle().set("font-size", "var(--lumo-font-size-l)");
-                
-                Paragraph subMessage = new Paragraph("Create your first event to get started!");
-                subMessage.getStyle().set("color", "var(--lumo-tertiary-text-color)");
-                subMessage.getStyle().set("font-size", "var(--lumo-font-size-m)");
-                
-                Button createButton = new Button("Create Event", new Icon(VaadinIcon.PLUS));
-                createButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-                RouterLink createLink = new RouterLink("", EventFormView.class);
-                createLink.add(createButton);
-                createLink.getStyle().set("text-decoration", "none");
-                
-                emptyState.add(icon, message, subMessage, createLink);
-                add(emptyState);
-            }
         } catch (Exception e) {
-            Notification.show("Error loading events: " + e.getMessage(), 5000, Notification.Position.MIDDLE);
+            Notification.show("Error loading events: " + e.getMessage());
         }
     }
 
     private void handlePublishEvent(UUID eventId) {
-        ConfirmDialog dialog = new ConfirmDialog(
-                "Publish Event",
-                "Are you sure you want to publish this event? It will become visible to all users."
-        );
-        
+        ConfirmDialog dialog = new ConfirmDialog("Publish Event", "Are you sure? It will become visible to all.");
         dialog.setOnConfirm(confirmed -> {
             if (confirmed) {
                 try {
                     eventService.publishEvent(eventId, currentUser);
-                    Notification.show("Event published successfully", 5000, Notification.Position.MIDDLE);
                     loadEvents();
-                } catch (ConflictException e) {
-                    Notification.show(e.getMessage(), 5000, Notification.Position.MIDDLE);
-                } catch (BusinessException e) {
-                    Notification.show(e.getMessage(), 5000, Notification.Position.MIDDLE);
+                    Notification.show("Event published!");
                 } catch (Exception e) {
-                    Notification.show("An error occurred. Please try again.", 5000, Notification.Position.MIDDLE);
+                    Notification.show("Error: " + e.getMessage());
                 }
             }
         });
-        
         dialog.open();
     }
 
     private void handleCancelEvent(UUID eventId) {
-        ConfirmDialog dialog = new ConfirmDialog(
-                "Cancel Event",
-                "Are you sure you want to cancel this event? Existing reservations will remain, but no new reservations can be made."
-        );
-        
+        ConfirmDialog dialog = new ConfirmDialog("Cancel Event", "Are you sure?");
         dialog.setOnConfirm(confirmed -> {
             if (confirmed) {
                 try {
                     eventService.cancelEvent(eventId, currentUser);
-                    Notification.show("Event cancelled successfully", 5000, Notification.Position.MIDDLE);
                     loadEvents();
-                } catch (ConflictException e) {
-                    Notification.show(e.getMessage(), 5000, Notification.Position.MIDDLE);
-                } catch (BusinessException e) {
-                    Notification.show(e.getMessage(), 5000, Notification.Position.MIDDLE);
+                    Notification.show("Event cancelled.");
                 } catch (Exception e) {
-                    Notification.show("An error occurred. Please try again.", 5000, Notification.Position.MIDDLE);
+                    Notification.show("Error: " + e.getMessage());
                 }
             }
         });
-        
         dialog.open();
     }
 
     private void handleDeleteEvent(UUID eventId) {
-        ConfirmDialog dialog = new ConfirmDialog(
-                "Delete Event",
-                "Are you sure you want to delete this event? This action cannot be undone. Events with reservations cannot be deleted."
-        );
-        
+        ConfirmDialog dialog = new ConfirmDialog("Delete Event", "This cannot be undone.");
         dialog.setOnConfirm(confirmed -> {
             if (confirmed) {
                 try {
                     eventService.deleteEvent(eventId, currentUser);
-                    Notification.show("Event deleted successfully", 5000, Notification.Position.MIDDLE);
                     loadEvents();
-                } catch (ConflictException e) {
-                    Notification.show(e.getMessage(), 5000, Notification.Position.MIDDLE);
-                } catch (BusinessException e) {
-                    Notification.show(e.getMessage(), 5000, Notification.Position.MIDDLE);
+                    Notification.show("Event deleted.");
                 } catch (Exception e) {
-                    Notification.show("An error occurred. Please try again.", 5000, Notification.Position.MIDDLE);
+                    Notification.show("Error: " + e.getMessage());
                 }
             }
         });
-        
         dialog.open();
     }
 }
-

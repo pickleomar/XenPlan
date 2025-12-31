@@ -1,9 +1,13 @@
 package com.xenplan.app.ui.view.publicview;
 
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Paragraph;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -26,89 +30,132 @@ import java.util.stream.Collectors;
 public class EventListView extends VerticalLayout {
 
     private final EventService eventService;
-    private final VerticalLayout eventsContainer = new VerticalLayout();
-    private final ComboBox<EventCategory> categoryFilter = new ComboBox<>("Category");
-    private final ComboBox<String> cityFilter = new ComboBox<>("City");
-    private final Button clearFiltersButton = new Button("Clear Filters");
+    
+    // We use a Div with CSS Grid instead of VerticalLayout for the cards
+    private final Div eventsGrid = new Div();
+    
+    private final ComboBox<EventCategory> categoryFilter = new ComboBox<>();
+    private final ComboBox<String> cityFilter = new ComboBox<>();
+    private final Button clearFiltersButton = new Button("Clear", new Icon(VaadinIcon.ERASER));
 
     public EventListView(EventService eventService) {
         this.eventService = eventService;
         
+        setSizeFull();
         setPadding(true);
         setSpacing(true);
-        setWidthFull();
         
         setupHeader();
         setupFilters();
-        setupEventsContainer();
+        setupEventsGrid();
         
         loadEvents();
     }
 
-    private void setupHeader() {
+    /*private void setupHeader() {
+        VerticalLayout header = new VerticalLayout();
+        header.setPadding(false);
+        header.setSpacing(false);
+        
         H2 title = new H2("Upcoming Events");
-        title.getStyle().set("margin-top", "0");
+        title.getStyle().set("margin-bottom", "0.5rem");
         
         Paragraph subtitle = new Paragraph("Discover and reserve your favorite events");
         subtitle.getStyle().set("color", "var(--lumo-secondary-text-color)");
         subtitle.getStyle().set("margin-top", "0");
         
-        add(title, subtitle);
+        header.add(title, subtitle);
+        add(header);
+    }*/
+    private void setupHeader() {
+        VerticalLayout header = new VerticalLayout();
+        header.setWidthFull(); // 1. Make the container fill the screen width
+        header.setPadding(false);
+        header.setSpacing(false);
+        
+        // 2. Center the items horizontally inside the layout
+        header.setAlignItems(Alignment.CENTER); 
+        
+        H2 title = new H2("Upcoming Events");
+        title.getStyle().set("margin-bottom", "0.5rem");
+        
+        Paragraph subtitle = new Paragraph("Discover and reserve your favorite events");
+        subtitle.getStyle().set("color", "var(--lumo-secondary-text-color)");
+        subtitle.getStyle().set("margin-top", "0");
+        subtitle.getStyle().set("text-align", "center"); // 3. Ensure text centers if it wraps
+        
+        header.add(title, subtitle);
+        add(header);
     }
 
     private void setupFilters() {
-        HorizontalLayout filterLayout = new HorizontalLayout();
-        filterLayout.setWidthFull();
-        filterLayout.setAlignItems(FlexComponent.Alignment.END);
-        filterLayout.setSpacing(true);
+        // Create a styled container for the filters
+        HorizontalLayout filterBar = new HorizontalLayout();
+        filterBar.setWidthFull();
+        filterBar.setAlignItems(FlexComponent.Alignment.CENTER); // Center vertically
+        filterBar.setPadding(true);
         
-        // Category filter
+        // Add a nice background to the filter bar
+        filterBar.getStyle().set("background-color", "var(--lumo-contrast-5pct)");
+        filterBar.getStyle().set("border-radius", "var(--lumo-border-radius-l)");
+        filterBar.getStyle().set("margin-bottom", "1rem");
+
+        // Category Filter
         categoryFilter.setItems(EventCategory.values());
-        categoryFilter.setPlaceholder("All Categories");
+        categoryFilter.setPlaceholder("Category");
+        categoryFilter.setPrefixComponent(new Icon(VaadinIcon.TAGS));
         categoryFilter.setClearButtonVisible(true);
-        categoryFilter.setWidth("200px");
         categoryFilter.addValueChangeListener(e -> applyFilters());
         
-        // City filter - get unique cities from events
+        // City Filter
         List<String> cities = eventService.findAllPublished().stream()
                 .map(Event::getCity)
                 .distinct()
                 .sorted()
                 .collect(Collectors.toList());
         cityFilter.setItems(cities);
-        cityFilter.setPlaceholder("All Cities");
+        cityFilter.setPlaceholder("City");
+        cityFilter.setPrefixComponent(new Icon(VaadinIcon.MAP_MARKER));
         cityFilter.setClearButtonVisible(true);
-        cityFilter.setWidth("200px");
         cityFilter.addValueChangeListener(e -> applyFilters());
         
-        // Clear filters button
-        clearFiltersButton.addThemeVariants();
+        // Button Styling
+        clearFiltersButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         clearFiltersButton.addClickListener(e -> {
             categoryFilter.clear();
             cityFilter.clear();
             loadEvents();
         });
+
+        // Add to bar
+        filterBar.add(categoryFilter, cityFilter);
         
-        filterLayout.add(categoryFilter, cityFilter, clearFiltersButton);
-        filterLayout.expand(categoryFilter, cityFilter);
-        
-        add(filterLayout);
+        // Spacer to push the Clear button to the right
+        Div spacer = new Div();
+        spacer.getStyle().set("flex-grow", "1");
+        filterBar.add(spacer, clearFiltersButton);
+
+        add(filterBar);
     }
 
-    private void setupEventsContainer() {
-        eventsContainer.setPadding(false);
-        eventsContainer.setSpacing(true);
-        eventsContainer.setWidthFull();
-        add(eventsContainer);
+    private void setupEventsGrid() {
+        // CSS Grid Logic
+        eventsGrid.setWidthFull();
+        eventsGrid.getStyle().set("display", "grid");
+        // This creates a responsive grid: columns are at least 350px wide, and fill the space
+        eventsGrid.getStyle().set("grid-template-columns", "repeat(auto-fill, minmax(350px, 1fr))");
+        eventsGrid.getStyle().set("gap", "1.5rem"); // Space between cards
+        eventsGrid.getStyle().set("padding-bottom", "2rem");
+        
+        add(eventsGrid);
     }
 
     private void loadEvents() {
-        eventsContainer.removeAll();
+        eventsGrid.removeAll();
         
         List<Event> events;
         
         if (categoryFilter.getValue() != null && cityFilter.getValue() != null) {
-            // Filter by both category and city
             List<Event> categoryEvents = eventService.findByCategory(categoryFilter.getValue());
             events = categoryEvents.stream()
                     .filter(e -> e.getCity().equals(cityFilter.getValue()))
@@ -121,24 +168,33 @@ public class EventListView extends VerticalLayout {
             events = eventService.findAllPublished();
         }
         
-        // Filter out cancelled and finished events for public view
         events = events.stream()
                 .filter(e -> e.getStatus() == EventStatus.PUBLISHED)
                 .collect(Collectors.toList());
         
         if (events.isEmpty()) {
+            VerticalLayout emptyState = new VerticalLayout();
+            emptyState.setAlignItems(Alignment.CENTER);
+            emptyState.setPadding(true);
+            
+            Icon icon = new Icon(VaadinIcon.SEARCH);
+            icon.setSize("48px");
+            icon.setColor("var(--lumo-secondary-text-color)");
+            
             Paragraph noEvents = new Paragraph("No events found. Try adjusting your filters.");
             noEvents.getStyle().set("color", "var(--lumo-secondary-text-color)");
-            noEvents.getStyle().set("text-align", "center");
-            noEvents.getStyle().set("padding", "2rem");
-            eventsContainer.add(noEvents);
+            
+            emptyState.add(icon, noEvents);
+            // Span the empty state across all columns
+            emptyState.getStyle().set("grid-column", "1 / -1"); 
+            
+            eventsGrid.add(emptyState);
         } else {
-            // Create event cards in a grid-like layout
             for (Event event : events) {
                 Integer availableSeats = eventService.calculateAvailableSeats(event.getId());
                 EventCard card = new EventCard(event, availableSeats);
-                card.setWidth("100%");
-                eventsContainer.add(card);
+                // Card width is handled by the Grid now
+                eventsGrid.add(card);
             }
         }
     }
