@@ -66,7 +66,7 @@ Follow these instructions to set up the project locally for development and test
 
 ### 1. Clone the Repository
 ```bash
-git clone [https://github.com/your-username/XenPlan.git](https://github.com/your-username/XenPlan.git)
+git clone [https://github.com/pickleomar/XenPlan.git]
 cd XenPlan
 
 ```
