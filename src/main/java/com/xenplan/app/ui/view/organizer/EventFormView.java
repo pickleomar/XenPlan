@@ -254,11 +254,17 @@ public class EventFormView extends VerticalLayout implements BeforeEnterObserver
         binder.forField(imageUrlField)
                 .bind(Event::getImageUrl, Event::setImageUrl);
         
-        // Buttons
+        // Buttons - Modernized with icons
+        saveButton.setText("Save Changes");
+        saveButton.setIcon(new com.vaadin.flow.component.icon.Icon(com.vaadin.flow.component.icon.VaadinIcon.CHECK));
         saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         saveButton.setEnabled(false); // Disabled until form is valid
+        saveButton.getStyle().set("box-shadow", "0 4px 6px -1px rgba(0, 0, 0, 0.1)");
         saveButton.addClickListener(e -> handleSave());
         
+        cancelButton.setText("Cancel");
+        cancelButton.setIcon(new com.vaadin.flow.component.icon.Icon(com.vaadin.flow.component.icon.VaadinIcon.CLOSE_SMALL));
+        cancelButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         cancelButton.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate(MyEventsView.class)));
         
         // Enable/disable save button based on binder validity
@@ -267,7 +273,7 @@ public class EventFormView extends VerticalLayout implements BeforeEnterObserver
             saveButton.setEnabled(isValid);
         });
         
-        HorizontalLayout buttonLayout = new HorizontalLayout(saveButton, cancelButton);
+        HorizontalLayout buttonLayout = new HorizontalLayout(cancelButton, saveButton);
         buttonLayout.setWidthFull();
         buttonLayout.setJustifyContentMode(JustifyContentMode.END);
         buttonLayout.setSpacing(true);
@@ -292,21 +298,25 @@ public class EventFormView extends VerticalLayout implements BeforeEnterObserver
         }
         
         // Check if event can be edited
-        if (event.getStatus() == EventStatus.PUBLISHED || 
-            event.getStatus() == EventStatus.FINISHED) {
-            Notification.show("Cannot edit PUBLISHED or FINISHED events", 5000, Notification.Position.MIDDLE);
+        if (event.getStatus() == EventStatus.FINISHED) {
+            Notification.show("Cannot edit FINISHED events", 5000, Notification.Position.MIDDLE);
+            getUI().ifPresent(ui -> ui.navigate(MyEventsView.class));
+            return;
+        }
+        if (event.getStatus() == EventStatus.CANCELLED) {
+            Notification.show("Cannot edit CANCELLED events", 5000, Notification.Position.MIDDLE);
             getUI().ifPresent(ui -> ui.navigate(MyEventsView.class));
             return;
         }
         
         binder.readBean(event);
         
-        // Lock fields if event is PUBLISHED or FINISHED (defensive check)
+        // Lock fields if event is FINISHED or CANCELLED (defensive check)
         lockFieldsIfNeeded(event.getStatus());
     }
     
     private void lockFieldsIfNeeded(EventStatus status) {
-        boolean isLocked = status == EventStatus.PUBLISHED || status == EventStatus.FINISHED;
+        boolean isLocked = status == EventStatus.FINISHED || status == EventStatus.CANCELLED;
         
         titleField.setEnabled(!isLocked);
         descriptionField.setEnabled(!isLocked);

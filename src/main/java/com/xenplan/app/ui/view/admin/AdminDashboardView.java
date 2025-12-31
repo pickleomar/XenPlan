@@ -20,6 +20,7 @@ import com.xenplan.app.domain.enums.EventStatus;
 import com.xenplan.app.repository.EventRepository;
 import com.xenplan.app.service.EventService;
 import com.xenplan.app.service.UserService;
+import com.xenplan.app.ui.component.DashboardStatCard;
 import com.xenplan.app.ui.layout.MainLayout;
 import com.xenplan.app.ui.view.UserProfileView;
 import com.xenplan.app.security.SecurityUtils;
@@ -50,6 +51,7 @@ public class AdminDashboardView extends VerticalLayout {
         setPadding(true);
         setSpacing(true);
         setWidthFull();
+        setDefaultHorizontalComponentAlignment(FlexComponent.Alignment.CENTER);
         
         setupHeader();
         setupStats();
@@ -57,37 +59,13 @@ public class AdminDashboardView extends VerticalLayout {
     }
 
     private void setupHeader() {
-        HorizontalLayout headerLayout = new HorizontalLayout();
-        headerLayout.setWidthFull();
-        headerLayout.setAlignItems(FlexComponent.Alignment.CENTER);
-        headerLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
-        
-        VerticalLayout titleLayout = new VerticalLayout();
-        titleLayout.setSpacing(false);
-        titleLayout.setPadding(false);
-        
-        H2 title = new H2("Admin Dashboard");
+        H2 title = new H2("Platform Overview");
         title.getStyle().set("margin-top", "0");
-        title.getStyle().set("margin-bottom", "0.25rem");
+        title.getStyle().set("margin-bottom", "2rem");
         title.getStyle().set("font-size", "var(--lumo-font-size-xxxl)");
-        title.getStyle().set("font-weight", "600");
-        
-        Paragraph subtitle = new Paragraph("Manage users, events, and system settings");
-        subtitle.getStyle().set("color", "var(--lumo-secondary-text-color)");
-        subtitle.getStyle().set("margin-top", "0");
-        subtitle.getStyle().set("margin-bottom", "0");
-        
-        titleLayout.add(title, subtitle);
-        
-        // Profile button
-        Button profileButton = new Button("My Profile", new Icon(VaadinIcon.USER));
-        profileButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-        RouterLink profileLink = new RouterLink("", UserProfileView.class);
-        profileLink.add(profileButton);
-        profileLink.getStyle().set("text-decoration", "none");
-        
-        headerLayout.add(titleLayout, profileLink);
-        add(headerLayout);
+        title.getStyle().set("font-weight", "700");
+        title.getStyle().set("text-align", "center");
+        add(title);
     }
 
     private void setupStats() {
@@ -103,101 +81,69 @@ public class AdminDashboardView extends VerticalLayout {
                 .filter(u -> Boolean.TRUE.equals(u.getActive()))
                 .count();
         
-        HorizontalLayout statsLayout = new HorizontalLayout();
-        statsLayout.setWidthFull();
-        statsLayout.setSpacing(true);
+        // Create stat cards using the new component (NO EMOJIS - Vector Icons Only)
+        DashboardStatCard eventsCard = new DashboardStatCard(
+                "Total Events", 
+                totalEvents, 
+                VaadinIcon.CALENDAR, 
+                "var(--lumo-primary-color)"
+        );
         
-        statsLayout.add(createStatCard("Total Events", String.valueOf(totalEvents), "📅"));
-        statsLayout.add(createStatCard("Published Events", String.valueOf(publishedEvents), "✅"));
-        statsLayout.add(createStatCard("Total Users", String.valueOf(totalUsers), "👥"));
-        statsLayout.add(createStatCard("Active Users", String.valueOf(activeUsers), "✓"));
+        DashboardStatCard pubCard = new DashboardStatCard(
+                "Published", 
+                publishedEvents, 
+                VaadinIcon.CHECK_CIRCLE, 
+                "var(--lumo-success-color)"
+        );
         
-        add(statsLayout);
-    }
-
-    private VerticalLayout createStatCard(String label, String value, String icon) {
-        VerticalLayout card = new VerticalLayout();
-        card.setPadding(true);
-        card.setSpacing(false);
-        card.getStyle().set("background", "linear-gradient(135deg, var(--lumo-primary-color-5pct) 0%, var(--lumo-contrast-5pct) 100%)");
-        card.getStyle().set("border-radius", "var(--lumo-border-radius-l)");
-        card.getStyle().set("border", "1px solid var(--lumo-contrast-20pct)");
-        card.getStyle().set("box-shadow", "0 2px 8px rgba(0,0,0,0.1)");
-        card.getStyle().set("transition", "transform 0.2s, box-shadow 0.2s");
-        card.setWidth("100%");
-        card.addClassName("stat-card");
+        DashboardStatCard usersCard = new DashboardStatCard(
+                "Total Users", 
+                totalUsers, 
+                VaadinIcon.USERS, 
+                "var(--lumo-error-color)"
+        );
         
-        // Add hover effect
-        card.getElement().addEventListener("mouseenter", e -> {
-            card.getStyle().set("transform", "translateY(-4px)");
-            card.getStyle().set("box-shadow", "0 4px 12px rgba(0,0,0,0.15)");
-        });
-        card.getElement().addEventListener("mouseleave", e -> {
-            card.getStyle().set("transform", "translateY(0)");
-            card.getStyle().set("box-shadow", "0 2px 8px rgba(0,0,0,0.1)");
-        });
+        DashboardStatCard activeCard = new DashboardStatCard(
+                "Active Users", 
+                activeUsers, 
+                VaadinIcon.USER_CHECK, 
+                "var(--lumo-primary-color)"
+        );
         
-        Div iconDiv = new Div();
-        iconDiv.setText(icon);
-        iconDiv.getStyle().set("font-size", "2.5rem");
-        iconDiv.getStyle().set("margin-bottom", "0.75rem");
-        iconDiv.getStyle().set("opacity", "0.9");
+        // Grid Layout for Cards (Responsive)
+        Div statsGrid = new Div(eventsCard, pubCard, usersCard, activeCard);
+        statsGrid.getStyle().set("display", "grid");
+        statsGrid.getStyle().set("grid-template-columns", "repeat(auto-fit, minmax(250px, 1fr))");
+        statsGrid.getStyle().set("gap", "var(--lumo-space-l)");
+        statsGrid.getStyle().set("width", "100%");
+        statsGrid.getStyle().set("max-width", "1200px");
+        statsGrid.getStyle().set("margin", "0 auto");
         
-        Div valueDiv = new Div();
-        valueDiv.setText(value);
-        valueDiv.getStyle().set("font-size", "var(--lumo-font-size-xxxl)");
-        valueDiv.getStyle().set("font-weight", "700");
-        valueDiv.getStyle().set("color", "var(--lumo-primary-color)");
-        valueDiv.getStyle().set("line-height", "1.2");
-        
-        Div labelDiv = new Div();
-        labelDiv.setText(label);
-        labelDiv.getStyle().set("font-size", "var(--lumo-font-size-m)");
-        labelDiv.getStyle().set("color", "var(--lumo-secondary-text-color)");
-        labelDiv.getStyle().set("margin-top", "0.5rem");
-        labelDiv.getStyle().set("font-weight", "500");
-        
-        card.add(iconDiv, valueDiv, labelDiv);
-        return card;
+        add(statsGrid);
     }
 
     private void setupQuickActions() {
-        H3 actionsTitle = new H3("Quick Actions");
-        actionsTitle.getStyle().set("margin-top", "2rem");
-        actionsTitle.getStyle().set("margin-bottom", "1rem");
-        actionsTitle.getStyle().set("font-weight", "600");
-        add(actionsTitle);
-        
-        HorizontalLayout actionsLayout = new HorizontalLayout();
-        actionsLayout.setSpacing(true);
-        actionsLayout.setWidthFull();
-        actionsLayout.getStyle().set("flex-wrap", "wrap");
-        
-        Button manageUsers = new Button("Manage Users", new Icon(VaadinIcon.USERS));
-        manageUsers.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_LARGE);
-        manageUsers.setWidth("220px");
-        manageUsers.getStyle().set("height", "60px");
+        // Quick Actions (Styled Buttons)
+        Button manageUsersBtn = new Button("Manage Users", new Icon(VaadinIcon.USERS));
+        manageUsersBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_LARGE);
+        manageUsersBtn.getStyle().set("box-shadow", "0 4px 6px -1px rgba(0, 0, 0, 0.1)");
         RouterLink usersLink = new RouterLink("", UserManagementView.class);
-        usersLink.add(manageUsers);
+        usersLink.add(manageUsersBtn);
         usersLink.getStyle().set("text-decoration", "none");
         
-        Button manageEvents = new Button("Manage Events", new Icon(VaadinIcon.CALENDAR));
-        manageEvents.addThemeVariants(ButtonVariant.LUMO_CONTRAST, ButtonVariant.LUMO_LARGE);
-        manageEvents.setWidth("220px");
-        manageEvents.getStyle().set("height", "60px");
+        Button manageEventsBtn = new Button("Manage Events", new Icon(VaadinIcon.CALENDAR_CLOCK));
+        manageEventsBtn.addThemeVariants(ButtonVariant.LUMO_CONTRAST, ButtonVariant.LUMO_LARGE);
+        manageEventsBtn.getStyle().set("box-shadow", "0 4px 6px -1px rgba(0, 0, 0, 0.1)");
         RouterLink eventsLink = new RouterLink("", EventManagementView.class);
-        eventsLink.add(manageEvents);
+        eventsLink.add(manageEventsBtn);
         eventsLink.getStyle().set("text-decoration", "none");
         
-        Button profileButton = new Button("My Profile", new Icon(VaadinIcon.USER));
-        profileButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_LARGE);
-        profileButton.setWidth("220px");
-        profileButton.getStyle().set("height", "60px");
-        RouterLink profileLink = new RouterLink("", UserProfileView.class);
-        profileLink.add(profileButton);
-        profileLink.getStyle().set("text-decoration", "none");
+        HorizontalLayout actions = new HorizontalLayout(usersLink, eventsLink);
+        actions.setSpacing(true);
+        actions.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
+        actions.getStyle().set("margin-top", "3rem");
+        actions.setWidthFull();
         
-        actionsLayout.add(usersLink, eventsLink, profileLink);
-        add(actionsLayout);
+        add(actions);
     }
 }

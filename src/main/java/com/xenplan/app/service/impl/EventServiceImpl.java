@@ -72,9 +72,12 @@ public class EventServiceImpl implements EventService {
             throw new ForbiddenException("Only event creator or ADMIN can update events");
         }
 
-        // Business rule: Cannot update PUBLISHED or FINISHED events
-        if (event.getStatus() == EventStatus.PUBLISHED || event.getStatus() == EventStatus.FINISHED) {
-            throw new ConflictException("Cannot update PUBLISHED or FINISHED events");
+        // Business rule: Cannot update FINISHED or CANCELLED events
+        if (event.getStatus() == EventStatus.FINISHED) {
+            throw new ConflictException("Cannot update FINISHED events");
+        }
+        if (event.getStatus() == EventStatus.CANCELLED) {
+            throw new ConflictException("Cannot update CANCELLED events");
         }
 
         // Update fields
@@ -247,6 +250,12 @@ public class EventServiceImpl implements EventService {
 
     @Override
     @Transactional(readOnly = true)
+    public Optional<Event> findByIdWithOrganizer(UUID eventId) {
+        return eventRepository.findByIdWithOrganizer(eventId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<Event> findAllPublished() {
         return eventRepository.findByStatusOrderByStartDateAsc(EventStatus.PUBLISHED);
     }
@@ -267,6 +276,12 @@ public class EventServiceImpl implements EventService {
     @Transactional(readOnly = true)
     public List<Event> findByOrganizer(User organizer) {
         return eventRepository.findByOrganizerOrderByCreatedAtDesc(organizer);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Event> findByOrganizerId(UUID organizerId) {
+        return eventRepository.findByOrganizerIdOrderByCreatedAtDesc(organizerId);
     }
 }
 

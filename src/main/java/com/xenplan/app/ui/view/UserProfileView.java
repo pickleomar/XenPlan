@@ -138,10 +138,15 @@ public class UserProfileView extends VerticalLayout {
                 .bind(User::getPhone, User::setPhone);
         
         // Buttons
+        saveButton.setText("Save Changes");
+        saveButton.setIcon(new com.vaadin.flow.component.icon.Icon(com.vaadin.flow.component.icon.VaadinIcon.CHECK));
         saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        saveButton.getStyle().set("box-shadow", "0 4px 6px -1px rgba(0, 0, 0, 0.1)");
         saveButton.addClickListener(e -> handleSave());
         
+        changePasswordButton.setIcon(new com.vaadin.flow.component.icon.Icon(com.vaadin.flow.component.icon.VaadinIcon.LOCK));
         changePasswordButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
+        changePasswordButton.getStyle().set("box-shadow", "0 4px 6px -1px rgba(0, 0, 0, 0.1)");
         changePasswordButton.addClickListener(e -> openChangePasswordDialog());
         
         HorizontalLayout buttonLayout = new HorizontalLayout(saveButton, changePasswordButton);
@@ -284,7 +289,8 @@ public class UserProfileView extends VerticalLayout {
             }
         });
         
-        Button cancelButton = new Button("Cancel");
+        Button cancelButton = new Button("Cancel", new com.vaadin.flow.component.icon.Icon(com.vaadin.flow.component.icon.VaadinIcon.CLOSE_SMALL));
+        cancelButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         cancelButton.addClickListener(e -> dialog.close());
         
         HorizontalLayout buttonLayout = new HorizontalLayout(confirmButton, cancelButton);

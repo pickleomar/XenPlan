@@ -80,10 +80,17 @@ public class EventManagementView extends VerticalLayout {
                 .setSortable(true)
                 .setAutoWidth(true);
         
-        eventsGrid.addColumn(e -> e.getOrganizer().getFirstName() + " " + e.getOrganizer().getLastName())
-                .setHeader("Organizer")
-                .setSortable(true)
-                .setAutoWidth(true);
+        eventsGrid.addColumn(e -> {
+            // Safely access organizer - should be eagerly loaded now
+            User organizer = e.getOrganizer();
+            if (organizer != null) {
+                return organizer.getFirstName() + " " + organizer.getLastName();
+            }
+            return "Unknown";
+        })
+        .setHeader("Organizer")
+        .setSortable(true)
+        .setAutoWidth(true);
         
         eventsGrid.addColumn(e -> e.getCategory().name())
                 .setHeader("Category")
@@ -158,8 +165,8 @@ public class EventManagementView extends VerticalLayout {
     }
 
     private void loadEvents() {
-        // Admin can see all events
-        List<Event> events = eventRepository.findAll();
+        // Admin can see all events - use findAllWithOrganizer to eagerly load organizer
+        List<Event> events = eventRepository.findAllWithOrganizer();
         eventsGrid.setItems(events);
         
         if (events.isEmpty()) {

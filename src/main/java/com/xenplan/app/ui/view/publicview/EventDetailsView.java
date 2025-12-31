@@ -5,8 +5,12 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.H3;
+import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Paragraph;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.BeforeEnterEvent;
@@ -62,7 +66,8 @@ public class EventDetailsView extends VerticalLayout implements BeforeEnterObser
         
         try {
             this.eventId = UUID.fromString(eventIdParam);
-            this.event = eventService.findById(this.eventId)
+            // Use findByIdWithOrganizer to eagerly load organizer and avoid lazy loading issues
+            this.event = eventService.findByIdWithOrganizer(this.eventId)
                     .orElseThrow(() -> new NotFoundException("Event not found"));
             
             setupView();
@@ -70,16 +75,48 @@ public class EventDetailsView extends VerticalLayout implements BeforeEnterObser
             event.rerouteToError(NotFoundException.class);
         } catch (NotFoundException e) {
             event.rerouteToError(NotFoundException.class);
+        } catch (Exception e) {
+            event.rerouteToError(NotFoundException.class);
         }
     }
 
     private void setupView() {
         removeAll();
         
-        // Title and category
+        // Main content layout
+        VerticalLayout mainContent = new VerticalLayout();
+        mainContent.setSpacing(true);
+        mainContent.setPadding(false);
+        mainContent.setWidthFull();
+        
+        // Image section (if available)
+        if (event.getImageUrl() != null && !event.getImageUrl().trim().isEmpty()) {
+            Image eventImage = new Image(event.getImageUrl(), "Event image");
+            eventImage.setWidthFull();
+            eventImage.setMaxHeight("400px");
+            eventImage.getStyle().set("object-fit", "cover");
+            eventImage.getStyle().set("border-radius", "var(--lumo-border-radius-l)");
+            eventImage.getStyle().set("margin-bottom", "2rem");
+            mainContent.add(eventImage);
+        }
+        
+        // Title and badges section
+        VerticalLayout headerSection = new VerticalLayout();
+        headerSection.setSpacing(true);
+        headerSection.setPadding(false);
+        headerSection.setWidthFull();
+        
         H2 title = new H2(event.getTitle());
         title.getStyle().set("margin-top", "0");
+        title.getStyle().set("margin-bottom", "0.5rem");
+        title.getStyle().set("font-size", "var(--lumo-font-size-xxxl)");
+        title.getStyle().set("font-weight", "600");
         
+        HorizontalLayout badgesLayout = new HorizontalLayout();
+        badgesLayout.setSpacing(true);
+        badgesLayout.setAlignItems(FlexComponent.Alignment.CENTER);
+        
+        // Category badge
         Div categoryBadge = new Div();
         categoryBadge.setText(event.getCategory().name());
         categoryBadge.getStyle().set("display", "inline-block");
@@ -87,8 +124,12 @@ public class EventDetailsView extends VerticalLayout implements BeforeEnterObser
         categoryBadge.getStyle().set("color", "var(--lumo-primary-color)");
         categoryBadge.getStyle().set("padding", "0.5rem 1rem");
         categoryBadge.getStyle().set("border-radius", "var(--lumo-border-radius-m)");
-        categoryBadge.getStyle().set("font-weight", "500");
-        categoryBadge.getStyle().set("margin-bottom", "1rem");
+        categoryBadge.getStyle().set("font-weight", "600");
+        categoryBadge.getStyle().set("font-size", "var(--lumo-font-size-s)");
+        categoryBadge.getStyle().set("text-transform", "uppercase");
+        categoryBadge.getStyle().set("letter-spacing", "0.05em");
+        
+        badgesLayout.add(categoryBadge);
         
         // Status badge
         if (event.getStatus() == EventStatus.CANCELLED) {
@@ -99,86 +140,146 @@ public class EventDetailsView extends VerticalLayout implements BeforeEnterObser
             statusBadge.getStyle().set("color", "var(--lumo-error-color)");
             statusBadge.getStyle().set("padding", "0.5rem 1rem");
             statusBadge.getStyle().set("border-radius", "var(--lumo-border-radius-m)");
-            statusBadge.getStyle().set("font-weight", "500");
-            statusBadge.getStyle().set("margin-left", "0.5rem");
-            add(statusBadge);
+            statusBadge.getStyle().set("font-weight", "600");
+            statusBadge.getStyle().set("font-size", "var(--lumo-font-size-s)");
+            statusBadge.getStyle().set("text-transform", "uppercase");
+            statusBadge.getStyle().set("letter-spacing", "0.05em");
+            badgesLayout.add(statusBadge);
+        } else if (event.getStatus() == EventStatus.PUBLISHED) {
+            Div statusBadge = new Div();
+            statusBadge.setText("PUBLISHED");
+            statusBadge.getStyle().set("display", "inline-block");
+            statusBadge.getStyle().set("background", "var(--lumo-success-color-10pct)");
+            statusBadge.getStyle().set("color", "var(--lumo-success-color)");
+            statusBadge.getStyle().set("padding", "0.5rem 1rem");
+            statusBadge.getStyle().set("border-radius", "var(--lumo-border-radius-m)");
+            statusBadge.getStyle().set("font-weight", "600");
+            statusBadge.getStyle().set("font-size", "var(--lumo-font-size-s)");
+            statusBadge.getStyle().set("text-transform", "uppercase");
+            statusBadge.getStyle().set("letter-spacing", "0.05em");
+            badgesLayout.add(statusBadge);
         }
         
-        add(title, categoryBadge);
+        headerSection.add(title, badgesLayout);
+        mainContent.add(headerSection);
         
         // Description
         if (event.getDescription() != null && !event.getDescription().isEmpty()) {
             Paragraph description = new Paragraph(event.getDescription());
-            description.getStyle().set("font-size", "var(--lumo-font-size-m)");
-            description.getStyle().set("line-height", "1.6");
+            description.getStyle().set("font-size", "var(--lumo-font-size-l)");
+            description.getStyle().set("line-height", "1.8");
             description.getStyle().set("color", "var(--lumo-body-text-color)");
-            add(description);
+            description.getStyle().set("margin-top", "1rem");
+            description.getStyle().set("margin-bottom", "1rem");
+            mainContent.add(description);
         }
         
-        // Event details grid
+        // Event details section with modern card design
         VerticalLayout detailsSection = new VerticalLayout();
         detailsSection.setSpacing(true);
         detailsSection.setPadding(true);
         detailsSection.getStyle().set("background", "var(--lumo-contrast-5pct)");
-        detailsSection.getStyle().set("border-radius", "var(--lumo-border-radius-m)");
-        detailsSection.getStyle().set("margin-top", "1rem");
+        detailsSection.getStyle().set("border-radius", "var(--lumo-border-radius-l)");
+        detailsSection.getStyle().set("margin-top", "2rem");
+        detailsSection.getStyle().set("box-shadow", "0 2px 8px rgba(0,0,0,0.1)");
         
         H3 detailsTitle = new H3("Event Details");
         detailsTitle.getStyle().set("margin-top", "0");
+        detailsTitle.getStyle().set("margin-bottom", "1rem");
+        detailsTitle.getStyle().set("font-size", "var(--lumo-font-size-xl)");
+        detailsTitle.getStyle().set("font-weight", "600");
         detailsSection.add(detailsTitle);
         
-        // Date and time
-        Div dateInfo = createDetailRow("📅 Date & Time", 
+        // Date and time with icon
+        HorizontalLayout dateLayout = createDetailRowWithIcon(
+                VaadinIcon.CALENDAR, 
+                "Date & Time", 
                 event.getStartDate().format(DATE_FORMATTER) + " - " + 
                 event.getEndDate().format(DATE_FORMATTER));
-        detailsSection.add(dateInfo);
+        detailsSection.add(dateLayout);
         
-        // Location
-        Div locationInfo = createDetailRow("📍 Location", 
+        // Location with icon
+        HorizontalLayout locationLayout = createDetailRowWithIcon(
+                VaadinIcon.MAP_MARKER, 
+                "Location", 
                 event.getVenue() + ", " + event.getCity());
-        detailsSection.add(locationInfo);
+        detailsSection.add(locationLayout);
         
         // Capacity and availability
         Integer availableSeats = eventService.calculateAvailableSeats(event.getId());
-        Div capacityInfo = createDetailRow("🎫 Capacity", 
+        HorizontalLayout capacityLayout = createDetailRowWithIcon(
+                VaadinIcon.TICKET, 
+                "Capacity", 
                 availableSeats + " seats available out of " + event.getMaxCapacity());
-        detailsSection.add(capacityInfo);
+        detailsSection.add(capacityLayout);
         
-        // Price
-        Div priceInfo = createDetailRow("💰 Price", 
+        // Price with icon
+        HorizontalLayout priceLayout = createDetailRowWithIcon(
+                VaadinIcon.DOLLAR, 
+                "Price", 
                 formatPrice(event.getUnitPrice()) + " per seat");
-        detailsSection.add(priceInfo);
+        detailsSection.add(priceLayout);
         
-        // Organizer
+        // Organizer with icon (safely access organizer - should be eagerly loaded)
         if (event.getOrganizer() != null) {
-            Div organizerInfo = createDetailRow("👤 Organizer", 
-                    event.getOrganizer().getFirstName() + " " + event.getOrganizer().getLastName());
-            detailsSection.add(organizerInfo);
+            try {
+                String organizerName = event.getOrganizer().getFirstName() + " " + event.getOrganizer().getLastName();
+                HorizontalLayout organizerLayout = createDetailRowWithIcon(
+                        VaadinIcon.USER, 
+                        "Organizer", 
+                        organizerName);
+                detailsSection.add(organizerLayout);
+            } catch (Exception e) {
+                // If organizer is still lazy-loaded, show email or skip
+                if (event.getOrganizer().getEmail() != null) {
+                    HorizontalLayout organizerLayout = createDetailRowWithIcon(
+                            VaadinIcon.USER, 
+                            "Organizer", 
+                            event.getOrganizer().getEmail());
+                    detailsSection.add(organizerLayout);
+                }
+            }
         }
         
-        add(detailsSection);
+        mainContent.add(detailsSection);
         
-        // Reservation button (only for authenticated users and published events)
+        // Reservation button section
+        VerticalLayout actionSection = new VerticalLayout();
+        actionSection.setSpacing(true);
+        actionSection.setPadding(true);
+        actionSection.setAlignItems(FlexComponent.Alignment.CENTER);
+        actionSection.getStyle().set("margin-top", "2rem");
+        
         User currentUser = SecurityUtils.getCurrentUser();
         if (currentUser != null && event.getStatus() == EventStatus.PUBLISHED && availableSeats > 0) {
-            Button reserveButton = new Button("Reserve Seats");
+            Button reserveButton = new Button("Reserve Seats", new Icon(VaadinIcon.TICKET));
             reserveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_LARGE);
+            reserveButton.getStyle().set("font-size", "var(--lumo-font-size-l)");
+            reserveButton.getStyle().set("padding", "1rem 2rem");
             reserveButton.addClickListener(e -> openReservationDialog(currentUser));
-            reserveButton.getStyle().set("margin-top", "2rem");
-            add(reserveButton);
+            actionSection.add(reserveButton);
         } else if (currentUser == null) {
             Paragraph loginPrompt = new Paragraph("Please login to make a reservation");
             loginPrompt.getStyle().set("color", "var(--lumo-secondary-text-color)");
             loginPrompt.getStyle().set("font-style", "italic");
-            loginPrompt.getStyle().set("margin-top", "2rem");
-            add(loginPrompt);
+            loginPrompt.getStyle().set("font-size", "var(--lumo-font-size-m)");
+            actionSection.add(loginPrompt);
         } else if (availableSeats == 0) {
-            Paragraph soldOut = new Paragraph("This event is sold out");
-            soldOut.getStyle().set("color", "var(--lumo-error-color)");
-            soldOut.getStyle().set("font-weight", "500");
-            soldOut.getStyle().set("margin-top", "2rem");
-            add(soldOut);
+            Div soldOutBadge = new Div();
+            soldOutBadge.setText("SOLD OUT");
+            soldOutBadge.getStyle().set("background", "var(--lumo-error-color-10pct)");
+            soldOutBadge.getStyle().set("color", "var(--lumo-error-color)");
+            soldOutBadge.getStyle().set("padding", "1rem 2rem");
+            soldOutBadge.getStyle().set("border-radius", "var(--lumo-border-radius-m)");
+            soldOutBadge.getStyle().set("font-weight", "600");
+            soldOutBadge.getStyle().set("font-size", "var(--lumo-font-size-l)");
+            soldOutBadge.getStyle().set("text-transform", "uppercase");
+            soldOutBadge.getStyle().set("letter-spacing", "0.1em");
+            actionSection.add(soldOutBadge);
         }
+        
+        mainContent.add(actionSection);
+        add(mainContent);
     }
 
     private Div createDetailRow(String label, String value) {
@@ -198,6 +299,43 @@ public class EventDetailsView extends VerticalLayout implements BeforeEnterObser
         valueDiv.getStyle().set("text-align", "right");
         
         row.add(labelDiv, valueDiv);
+        return row;
+    }
+    
+    private HorizontalLayout createDetailRowWithIcon(VaadinIcon icon, String label, String value) {
+        HorizontalLayout row = new HorizontalLayout();
+        row.setWidthFull();
+        row.setAlignItems(FlexComponent.Alignment.CENTER);
+        row.setSpacing(true);
+        row.getStyle().set("padding", "1rem 0");
+        row.getStyle().set("border-bottom", "1px solid var(--lumo-contrast-20pct)");
+        
+        Icon iconComponent = new Icon(icon);
+        iconComponent.setSize("1.5rem");
+        iconComponent.getStyle().set("color", "var(--lumo-primary-color)");
+        
+        VerticalLayout contentLayout = new VerticalLayout();
+        contentLayout.setSpacing(false);
+        contentLayout.setPadding(false);
+        contentLayout.setFlexGrow(1);
+        
+        Div labelDiv = new Div();
+        labelDiv.setText(label);
+        labelDiv.getStyle().set("font-weight", "600");
+        labelDiv.getStyle().set("color", "var(--lumo-secondary-text-color)");
+        labelDiv.getStyle().set("font-size", "var(--lumo-font-size-s)");
+        labelDiv.getStyle().set("text-transform", "uppercase");
+        labelDiv.getStyle().set("letter-spacing", "0.05em");
+        
+        Div valueDiv = new Div();
+        valueDiv.setText(value);
+        valueDiv.getStyle().set("font-size", "var(--lumo-font-size-m)");
+        valueDiv.getStyle().set("color", "var(--lumo-body-text-color)");
+        valueDiv.getStyle().set("margin-top", "0.25rem");
+        
+        contentLayout.add(labelDiv, valueDiv);
+        row.add(iconComponent, contentLayout);
+        
         return row;
     }
 

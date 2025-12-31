@@ -52,6 +52,11 @@ public interface EventService {
     Optional<Event> findById(UUID eventId);
     
     /**
+     * Get event by ID with organizer eagerly loaded (prevents lazy loading issues)
+     */
+    Optional<Event> findByIdWithOrganizer(UUID eventId);
+    
+    /**
      * Get all published events
      */
     List<Event> findAllPublished();
@@ -70,5 +75,10 @@ public interface EventService {
      * Get events by organizer
      */
     List<Event> findByOrganizer(User organizer);
+    
+    /**
+     * Get events by organizer ID (more reliable with detached entities)
+     */
+    List<Event> findByOrganizerId(UUID organizerId);
 }
 
