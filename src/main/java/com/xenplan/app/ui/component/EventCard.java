@@ -2,10 +2,13 @@ package com.xenplan.app.ui.component;
 
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment;
+import com.vaadin.flow.component.orderedlayout.FlexComponent.JustifyContentMode;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.RouterLink;
@@ -30,12 +33,11 @@ public class EventCard extends VerticalLayout {
         getStyle().set("background", "var(--lumo-base-color)");
         getStyle().set("box-shadow", "0 2px 4px rgba(0,0,0,0.1)");
 
-        // Title
+        // --- 1. Header (Title & Category) ---
         H3 title = new H3(event.getTitle());
         title.getStyle().set("margin", "0");
         title.getStyle().set("font-size", "var(--lumo-font-size-xl)");
 
-        // Category badge
         Span categoryBadge = new Span(event.getCategory().name());
         categoryBadge.getStyle().set("background", "var(--lumo-primary-color-10pct)");
         categoryBadge.getStyle().set("color", "var(--lumo-primary-color)");
@@ -49,8 +51,11 @@ public class EventCard extends VerticalLayout {
         titleLayout.setAlignItems(Alignment.CENTER);
         titleLayout.setJustifyContentMode(JustifyContentMode.BETWEEN);
         titleLayout.add(title, categoryBadge);
+        
+        // FIX: Add title layout immediately so it appears at the top
+        add(titleLayout);
 
-        // Description (truncated)
+        // --- 2. Description ---
         if (event.getDescription() != null && !event.getDescription().isEmpty()) {
             Paragraph description = new Paragraph(
                     event.getDescription().length() > 150 
@@ -59,48 +64,36 @@ public class EventCard extends VerticalLayout {
             );
             description.getStyle().set("color", "var(--lumo-secondary-text-color)");
             description.getStyle().set("margin", "0.5rem 0");
-            add(description);
+            add(description); // Added AFTER title
         }
 
-        // Event details
+        // --- 3. Event Details with Icons ---
         VerticalLayout details = new VerticalLayout();
         details.setSpacing(false);
         details.setPadding(false);
 
-        // Date and time
-        Div dateInfo = new Div();
-        dateInfo.setText("📅 " + event.getStartDate().format(DATE_FORMATTER));
-        dateInfo.getStyle().set("font-size", "var(--lumo-font-size-s)");
-        dateInfo.getStyle().set("color", "var(--lumo-secondary-text-color)");
-        dateInfo.getStyle().set("margin-bottom", "0.25rem");
+        // Date Row
+        details.add(createDetailRow(VaadinIcon.CALENDAR, event.getStartDate().format(DATE_FORMATTER)));
 
-        // Venue and city
-        Div locationInfo = new Div();
-        locationInfo.setText("📍 " + event.getVenue() + ", " + event.getCity());
-        locationInfo.getStyle().set("font-size", "var(--lumo-font-size-s)");
-        locationInfo.getStyle().set("color", "var(--lumo-secondary-text-color)");
-        locationInfo.getStyle().set("margin-bottom", "0.25rem");
+        // Location Row
+        details.add(createDetailRow(VaadinIcon.MAP_MARKER, event.getVenue() + ", " + event.getCity()));
 
-        // Price
-        Div priceInfo = new Div();
-        priceInfo.setText("💰 " + formatPrice(event.getUnitPrice()) + " per seat");
-        priceInfo.getStyle().set("font-size", "var(--lumo-font-size-s)");
-        priceInfo.getStyle().set("color", "var(--lumo-secondary-text-color)");
-        priceInfo.getStyle().set("margin-bottom", "0.25rem");
+        // Price Row
+        details.add(createDetailRow(VaadinIcon.DOLLAR, formatPrice(event.getUnitPrice()) + " per seat"));
 
-        // Available seats
+        // Seats Row
         if (availableSeats != null) {
-            Div seatsInfo = new Div();
-            seatsInfo.setText("🎫 " + availableSeats + " seats available");
-            seatsInfo.getStyle().set("font-size", "var(--lumo-font-size-s)");
-            seatsInfo.getStyle().set("color", availableSeats > 0 ? "var(--lumo-success-color)" : "var(--lumo-error-color)");
-            seatsInfo.getStyle().set("font-weight", "500");
-            details.add(seatsInfo);
+            HorizontalLayout seatsRow = createDetailRow(VaadinIcon.TICKET, availableSeats + " seats available");
+            // Highlight color for seats text
+            Span textSpan = (Span) seatsRow.getComponentAt(1);
+            textSpan.getStyle().set("color", availableSeats > 0 ? "var(--lumo-success-color)" : "var(--lumo-error-color)");
+            textSpan.getStyle().set("font-weight", "500");
+            details.add(seatsRow);
         }
 
-        details.add(dateInfo, locationInfo, priceInfo);
+        add(details);
 
-        // Action button
+        // --- 4. Actions ---
         Button viewButton = new Button("View Details");
         viewButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         viewButton.setWidthFull();
@@ -111,24 +104,35 @@ public class EventCard extends VerticalLayout {
         detailsLink.add(viewButton);
         detailsLink.getStyle().set("text-decoration", "none");
 
-        // Status indicator
+        add(detailsLink);
+
+        // Cancelled Status Overlay
         if (event.getStatus() == EventStatus.CANCELLED) {
-            Span statusBadge = new Span("CANCELLED");
-            statusBadge.getStyle().set("background", "var(--lumo-error-color-10pct)");
-            statusBadge.getStyle().set("color", "var(--lumo-error-color)");
-            statusBadge.getStyle().set("padding", "0.25rem 0.75rem");
-            statusBadge.getStyle().set("border-radius", "var(--lumo-border-radius-s)");
-            statusBadge.getStyle().set("font-size", "var(--lumo-font-size-xs)");
-            statusBadge.getStyle().set("font-weight", "500");
             viewButton.setEnabled(false);
             viewButton.setText("Event Cancelled");
-            add(statusBadge);
+            viewButton.addThemeVariants(ButtonVariant.LUMO_ERROR);
         }
+    }
 
-        add(titleLayout, details, detailsLink);
+    // Helper to create "Icon + Text" rows nicely
+    private HorizontalLayout createDetailRow(VaadinIcon icon, String text) {
+        Icon i = new Icon(icon);
+        i.setSize("var(--lumo-font-size-s)"); // Small professional icon size
+        i.getStyle().set("color", "var(--lumo-tertiary-text-color)"); // Subtle icon color
+        
+        Span s = new Span(text);
+        s.getStyle().set("font-size", "var(--lumo-font-size-s)");
+        s.getStyle().set("color", "var(--lumo-secondary-text-color)");
+        
+        HorizontalLayout row = new HorizontalLayout(i, s);
+        row.setAlignItems(Alignment.CENTER);
+        row.setSpacing(true);
+        row.getStyle().set("gap", "0.5rem"); // Better spacing control
+        row.getStyle().set("margin-bottom", "0.25rem");
+        return row;
     }
 
     private String formatPrice(BigDecimal price) {
-        return String.format("$%.2f", price);
+        return String.format("%.2f", price);
     }
 }
