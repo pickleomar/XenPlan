@@ -1,6 +1,3 @@
-Here is the clean, professional version of the README without emojis.
-
-```markdown
 # XenPlan – Enterprise Event Management Platform
 
 ![Project Status](https://img.shields.io/badge/Status-Active_Development-brightgreen)
