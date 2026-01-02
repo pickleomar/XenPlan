@@ -49,6 +49,9 @@ build/
 .DS_Store
 Thumbs.db
 
+#ENV
+.env
+
 # --- Project Specific / Temporary Files ---
 xenplan_debug.txt
 Untitled
